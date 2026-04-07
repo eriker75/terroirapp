@@ -19,6 +19,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Terroir brand colors
+        'dark-brown': '#361E1C',
+        'brown': '#A1523A',
+        'accent': '#E96141',
+        'light-beige': '#EEEBE4',
+        'terroir-border': '#D4CFC6',
+        'muted-foreground': '#6B5D4F',
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
