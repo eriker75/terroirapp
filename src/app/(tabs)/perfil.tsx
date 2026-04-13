@@ -27,17 +27,17 @@ const menuSections = [
     title: 'Mi Cuenta',
     items: [
       { icon: ShoppingBag, label: 'Mis Órdenes', badge: '5', route: '/ordenes' },
-      { icon: Heart, label: 'Mis Favoritos', badge: '12', route: null },
-      { icon: MapPin, label: 'Mis Direcciones', badge: null, route: null },
-      { icon: CreditCard, label: 'Mis Tarjetas', badge: null, route: null },
+      { icon: Heart, label: 'Mis Favoritos', badge: '12', route: '/perfil/favoritos' },
+      { icon: MapPin, label: 'Mis Direcciones', badge: null, route: '/perfil/direcciones' },
+      { icon: CreditCard, label: 'Mis Tarjetas', badge: null, route: '/perfil/tarjetas' },
     ],
   },
   {
     title: 'Configuración',
     items: [
       { icon: Bell, label: 'Notificaciones', badge: '2', route: '/notificaciones' },
-      { icon: Settings, label: 'Preferencias', badge: null, route: null },
-      { icon: Shield, label: 'Política de Privacidad', badge: null, route: null },
+      { icon: Settings, label: 'Preferencias', badge: null, route: '/perfil/settings' },
+      { icon: Shield, label: 'Política de Privacidad', badge: null, route: '/perfil/privacidad' },
     ],
   },
 ];
@@ -68,14 +68,14 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>Ronald Richards</Text>
           <Text style={styles.userEmail}>ronald@gmail.com</Text>
           <Text style={styles.userSince}>Miembro desde Enero 2024</Text>
-          <TouchableOpacity style={styles.editBtn}>
+          <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/perfil/editar' as any)}>
             <Text style={styles.editBtnText}>Editar perfil</Text>
           </TouchableOpacity>
         </View>
 
         {/* Quick Stats */}
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/ordenes')}>
+          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/ordenes' as any)}>
             <Text style={styles.statValue}>5</Text>
             <Text style={styles.statLabel}>Pedidos</Text>
           </TouchableOpacity>
@@ -114,7 +114,7 @@ export default function ProfileScreen() {
                   <TouchableOpacity
                     key={item.label}
                     style={[styles.menuItem, !isLast && styles.menuItemBorder]}
-                    onPress={() => item.route && router.push(item.route as '/notificaciones' | '/ordenes')}
+                    onPress={() => item.route && router.push(item.route as any)}
                   >
                     <View style={styles.menuItemLeft}>
                       <View style={styles.menuIconBox}>

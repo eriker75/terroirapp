@@ -7,21 +7,23 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Heart, ShoppingBag, Trash2 } from 'lucide-react-native';
+import { Heart, ShoppingBag, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
 import { products } from '@/src/data/products';
+import { useAppStore } from '@/src/store/useAppStore';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 44) / 2;
 
-// Pre-loaded favorites
 const initialFavorites = ['1', '2', '5', '7', '10'];
 
-export default function FavoritesScreen() {
+export default function DeseosScreen() {
   const router = useRouter();
+  const addToCart = useAppStore((s) => s.addToCart);
   const [favorites, setFavorites] = useState<string[]>(initialFavorites);
 
   const favoriteProducts = products.filter((p) => favorites.includes(p.id));
@@ -48,10 +50,7 @@ export default function FavoritesScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mis Favoritos</Text>
+        <Text style={styles.headerTitle}>Mis Deseos</Text>
         {favorites.length > 0 ? (
           <TouchableOpacity onPress={clearAll}>
             <Trash2 size={20} color={COLORS.red} />
@@ -70,14 +69,13 @@ export default function FavoritesScreen() {
       )}
 
       {favoriteProducts.length === 0 ? (
-        /* Empty state */
         <View style={styles.emptyState}>
           <View style={styles.emptyHeart}>
             <Heart size={40} color={COLORS.border} />
           </View>
-          <Text style={styles.emptyTitle}>Sin favoritos aún</Text>
+          <Text style={styles.emptyTitle}>Sin deseos aún</Text>
           <Text style={styles.emptySubtitle}>
-            Agrega productos a tus favoritos para tenerlos siempre a mano
+            Agrega productos a tu lista de deseos para tenerlos siempre a mano
           </Text>
           <TouchableOpacity
             style={styles.exploreBtn}
@@ -90,10 +88,15 @@ export default function FavoritesScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
           {favoriteProducts.map((product) => (
-            <View key={product.id} style={styles.card}>
+            <TouchableOpacity
+              key={product.id}
+              style={styles.card}
+              onPress={() => router.push(`/productos/${product.id}` as any)}
+              activeOpacity={0.88}
+            >
               {/* Image */}
               <View style={styles.imageBox}>
-                <Text style={styles.emoji}>{product.emoji}</Text>
+                <Image source={product.image} style={styles.productImg} resizeMode="cover" />
                 {/* Remove button */}
                 <TouchableOpacity
                   style={styles.heartBtn}
@@ -126,11 +129,14 @@ export default function FavoritesScreen() {
               </View>
 
               {/* Add to cart */}
-              <TouchableOpacity style={styles.addBtn}>
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => addToCart()}
+              >
                 <ShoppingBag size={14} color={COLORS.darkBrown} />
                 <Text style={styles.addBtnText}>Agregar</Text>
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: COLORS.darkBrown },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.darkBrown },
   countRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -204,11 +210,9 @@ const styles = StyleSheet.create({
   imageBox: {
     height: 130,
     backgroundColor: COLORS.lightBeige,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
   },
-  emoji: { fontSize: 48 },
+  productImg: { width: '100%', height: '100%' },
   heartBtn: {
     position: 'absolute',
     top: 8,

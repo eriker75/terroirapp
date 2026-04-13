@@ -1,3 +1,5 @@
+import { ImageSourcePropType } from 'react-native';
+
 export interface Product {
   id: string;
   name: string;
@@ -12,7 +14,7 @@ export interface Product {
   inStock: boolean;
   stock: number;
   discount?: number;
-  emoji: string;
+  image: ImageSourcePropType;
 }
 
 export const products: Product[] = [
@@ -29,7 +31,7 @@ export const products: Product[] = [
     reviewCount: 324,
     inStock: true,
     stock: 50,
-    emoji: '☕',
+    image: require('../../assets/images/products/espresso-obsidian.jpg'),
   },
   {
     id: '2',
@@ -42,7 +44,7 @@ export const products: Product[] = [
     reviewCount: 412,
     inStock: true,
     stock: 75,
-    emoji: '🥛',
+    image: require('../../assets/images/products/caramel-latte.jpg'),
   },
   {
     id: '3',
@@ -55,7 +57,7 @@ export const products: Product[] = [
     reviewCount: 287,
     inStock: true,
     stock: 60,
-    emoji: '❄️',
+    image: require('../../assets/images/products/cold-brew-etiopia.jpg'),
   },
   {
     id: '4',
@@ -68,7 +70,7 @@ export const products: Product[] = [
     reviewCount: 198,
     inStock: true,
     stock: 45,
-    emoji: '🍯',
+    image: require('../../assets/images/products/cortado-miel.jpg'),
   },
   {
     id: '5',
@@ -83,7 +85,7 @@ export const products: Product[] = [
     reviewCount: 156,
     inStock: true,
     stock: 30,
-    emoji: '🌿',
+    image: require('../../assets/images/kenia-aa.jpg'),
   },
   {
     id: '6',
@@ -96,7 +98,7 @@ export const products: Product[] = [
     reviewCount: 523,
     inStock: true,
     stock: 80,
-    emoji: '☁️',
+    image: require('../../assets/images/cappuccino.jpg'),
   },
   {
     id: '7',
@@ -112,7 +114,7 @@ export const products: Product[] = [
     inStock: true,
     stock: 40,
     discount: 10,
-    emoji: '🌱',
+    image: require('../../assets/images/coffee-product-1.jpg'),
   },
   {
     id: '8',
@@ -125,7 +127,7 @@ export const products: Product[] = [
     reviewCount: 342,
     inStock: true,
     stock: 65,
-    emoji: '🍫',
+    image: require('../../assets/images/coffee-product-2.jpg'),
   },
   {
     id: '9',
@@ -138,7 +140,7 @@ export const products: Product[] = [
     reviewCount: 456,
     inStock: true,
     stock: 100,
-    emoji: '💧',
+    image: require('../../assets/images/product-americano.jpg'),
   },
   {
     id: '10',
@@ -154,7 +156,7 @@ export const products: Product[] = [
     inStock: true,
     stock: 45,
     discount: 15,
-    emoji: '🌺',
+    image: require('../../assets/images/coffee-product-3.jpg'),
   },
   {
     id: '11',
@@ -167,7 +169,7 @@ export const products: Product[] = [
     reviewCount: 89,
     inStock: true,
     stock: 120,
-    emoji: '🔧',
+    image: require('../../assets/images/coffee-filter.jpg'),
   },
   {
     id: '12',
@@ -180,6 +182,6 @@ export const products: Product[] = [
     reviewCount: 198,
     inStock: true,
     stock: 35,
-    emoji: '🫖',
+    image: require('../../assets/images/ground-coffee.jpg'),
   },
 ];

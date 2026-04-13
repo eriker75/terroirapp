@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, Search } from 'lucide-react-native';
@@ -22,30 +23,30 @@ const banners = [
     title: 'El café que mereces',
     subtitle: 'Especialidad de origen único',
     bg: COLORS.darkBrown,
-    emoji: '☕',
+    image: require('../../../assets/images/coffee-banner-1.jpg'),
   },
   {
     id: '2',
     title: 'Cold Brew Premium',
     subtitle: 'Refrescante y vibrante',
     bg: '#473B08',
-    emoji: '❄️',
+    image: require('../../../assets/images/coffee-banner-2.jpg'),
   },
   {
     id: '3',
     title: 'Nuevos Orígenes',
     subtitle: 'Kenia, Etiopía, Colombia',
     bg: '#5A2D1E',
-    emoji: '🌍',
+    image: require('../../../assets/images/coffee-banner-3.jpg'),
   },
 ];
 
 const categories = [
-  { id: 'all', name: 'Todos', icon: '☕' },
-  { id: 'espresso', name: 'Espresso', icon: '🔥' },
-  { id: 'cappuccino', name: 'Cappuccino', icon: '☁️' },
-  { id: 'latte', name: 'Latte', icon: '🥛' },
-  { id: 'cold-brew', name: 'Cold Brew', icon: '❄️' },
+  { id: 'all', name: 'Todos', image: require('../../../assets/images/coffee-product-5.jpg') },
+  { id: 'espresso', name: 'Espresso', image: require('../../../assets/images/espresso.jpg') },
+  { id: 'cappuccino', name: 'Cappuccino', image: require('../../../assets/images/cappuccino.jpg') },
+  { id: 'latte', name: 'Latte', image: require('../../../assets/images/product-latte.jpg') },
+  { id: 'cold-brew', name: 'Cold Brew', image: require('../../../assets/images/cold-brew.jpg') },
 ];
 
 export default function HomeScreen() {
@@ -93,8 +94,9 @@ export default function HomeScreen() {
           >
             {banners.map((banner) => (
               <View key={banner.id} style={[styles.bannerSlide, { backgroundColor: banner.bg }]}>
-                <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
-                <View>
+                <Image source={banner.image} style={styles.bannerImage} resizeMode="cover" />
+                <View style={styles.bannerOverlay} />
+                <View style={styles.bannerContent}>
                   <Text style={styles.bannerTitle}>{banner.title}</Text>
                   <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
                 </View>
@@ -113,16 +115,24 @@ export default function HomeScreen() {
 
         {/* Promo Banner */}
         <View style={styles.promoBanner}>
-          <View>
-            <Text style={styles.promoTitle}>Oferta Especial</Text>
-            <Text style={styles.promoSubtitle}>20% descuento en tu primer pedido</Text>
+          <Image
+            source={require('../../../assets/images/coffee-banner-promo.jpg')}
+            style={styles.promoBannerBg}
+            resizeMode="cover"
+          />
+          <View style={styles.promoBannerOverlay} />
+          <View style={styles.promoBannerContent}>
+            <View>
+              <Text style={styles.promoTitle}>Oferta Especial</Text>
+              <Text style={styles.promoSubtitle}>20% descuento en tu primer pedido</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.promoBtn}
+              onPress={() => router.push('/(tabs)/productos')}
+            >
+              <Text style={styles.promoBtnText}>Comprar ahora</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.promoBtn}
-            onPress={() => router.push('/(tabs)/productos')}
-          >
-            <Text style={styles.promoBtnText}>Comprar ahora</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Categories */}
@@ -135,7 +145,8 @@ export default function HomeScreen() {
                 style={styles.categoryCard}
                 onPress={() => router.push('/(tabs)/productos')}
               >
-                <Text style={styles.categoryIcon}>{cat.icon}</Text>
+                <Image source={cat.image} style={styles.categoryImage} resizeMode="cover" />
+                <View style={styles.categoryImageOverlay} />
                 <Text style={styles.categoryName}>{cat.name}</Text>
               </TouchableOpacity>
             ))}
@@ -158,7 +169,7 @@ export default function HomeScreen() {
                 onPress={() => router.push('/(tabs)/productos')}
               >
                 <View style={styles.productImageBox}>
-                  <Text style={styles.productEmoji}>{product.emoji}</Text>
+                  <Image source={product.image} style={styles.productImage} resizeMode="cover" />
                   {product.discount && (
                     <View style={styles.discountBadge}>
                       <Text style={styles.discountText}>-{product.discount}%</Text>
@@ -166,7 +177,9 @@ export default function HomeScreen() {
                   )}
                 </View>
                 <View style={styles.productInfo}>
-                  <Text style={styles.productCategory}>Café</Text>
+                  <Text style={styles.productCategory}>
+                    {product.category === 'coffee' ? 'Café' : product.category === 'beverages' ? 'Bebida' : 'Accesorio'}
+                  </Text>
                   <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
                   <View style={styles.productFooter}>
                     <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
@@ -250,26 +263,33 @@ const styles = StyleSheet.create({
   bannerSlide: {
     width: width - 32,
     borderRadius: 12,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 110,
+    minHeight: 130,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
   },
-  bannerEmoji: {
-    fontSize: 48,
+  bannerImage: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  bannerOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.40)',
+  },
+  bannerContent: {
+    padding: 18,
   },
   bannerTitle: {
     color: COLORS.white,
     fontSize: 18,
     fontWeight: '700',
-    textAlign: 'right',
   },
   bannerSubtitle: {
     color: COLORS.white + 'CC',
     fontSize: 13,
     marginTop: 4,
-    textAlign: 'right',
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -290,12 +310,26 @@ const styles = StyleSheet.create({
   promoBanner: {
     marginHorizontal: 16,
     marginBottom: 20,
-    backgroundColor: COLORS.darkBrown,
     borderRadius: 12,
-    padding: 16,
+    overflow: 'hidden',
+    minHeight: 72,
+  },
+  promoBannerBg: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  promoBannerOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: COLORS.darkBrown + 'CC',
+  },
+  promoBannerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: 16,
   },
   promoTitle: {
     color: COLORS.white,
@@ -345,24 +379,31 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   categoryCard: {
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    width: 80,
+    height: 80,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minWidth: 76,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  categoryIcon: {
-    fontSize: 24,
-    marginBottom: 6,
+  categoryImage: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  categoryImageOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.38)',
   },
   categoryName: {
     fontSize: 11,
-    color: COLORS.darkBrown,
-    fontWeight: '500',
+    color: COLORS.white,
+    fontWeight: '700',
     textAlign: 'center',
+    paddingBottom: 7,
+    paddingHorizontal: 4,
   },
   productsGrid: {
     flexDirection: 'row',
@@ -381,12 +422,11 @@ const styles = StyleSheet.create({
   productImageBox: {
     height: 120,
     backgroundColor: COLORS.lightBeige,
-    alignItems: 'center',
-    justifyContent: 'center',
     position: 'relative',
   },
-  productEmoji: {
-    fontSize: 44,
+  productImage: {
+    width: '100%',
+    height: '100%',
   },
   discountBadge: {
     position: 'absolute',

@@ -4,7 +4,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Package, Star } from 'lucide-react-native';
@@ -34,11 +33,7 @@ const ordersData: Record<string, {
       { id: 1, name: 'Espresso Obsidian', emoji: '☕', price: 5.00, qty: 2 },
       { id: 2, name: 'Caramel Latte', emoji: '🥛', price: 5.25, qty: 1 },
     ],
-    subtotal: 15.25,
-    discount: -1.50,
-    tax: 1.53,
-    shipping: 3.00,
-    total: 18.28,
+    subtotal: 15.25, discount: -1.50, tax: 1.53, shipping: 3.00, total: 18.28,
     address: '4140 Parker Rd., Allentown, NM 31134',
     trackingCode: 'TRR-A8234-K',
   },
@@ -50,11 +45,7 @@ const ordersData: Record<string, {
       { id: 1, name: 'Café Kenia AA', emoji: '🌿', price: 18.00, qty: 1 },
       { id: 2, name: 'Cold Brew Etiopía', emoji: '❄️', price: 6.00, qty: 2 },
     ],
-    subtotal: 30.00,
-    discount: -3.00,
-    tax: 2.70,
-    shipping: 0,
-    total: 29.70,
+    subtotal: 30.00, discount: -3.00, tax: 2.70, shipping: 0, total: 29.70,
     address: '2464 Royal Ln., Mesa, AZ 45463',
     trackingCode: 'TRR-B5512-M',
   },
@@ -65,11 +56,7 @@ const ordersData: Record<string, {
     items: [
       { id: 1, name: 'Prensa Francesa', emoji: '🫖', price: 32.99, qty: 1 },
     ],
-    subtotal: 32.99,
-    discount: 0,
-    tax: 3.30,
-    shipping: 5.00,
-    total: 41.29,
+    subtotal: 32.99, discount: 0, tax: 3.30, shipping: 5.00, total: 41.29,
     address: '4140 Parker Rd., Allentown, NM 31134',
     trackingCode: 'TRR-C9901-J',
   },
@@ -81,11 +68,7 @@ const ordersData: Record<string, {
       { id: 1, name: 'Café Colombia Supremo', emoji: '🌱', price: 16.00, qty: 2 },
       { id: 2, name: 'Filtro Premium', emoji: '🔧', price: 24.99, qty: 1 },
     ],
-    subtotal: 56.99,
-    discount: -5.00,
-    tax: 5.20,
-    shipping: 3.00,
-    total: 60.19,
+    subtotal: 56.99, discount: -5.00, tax: 5.20, shipping: 3.00, total: 60.19,
     address: '4140 Parker Rd., Allentown, NM 31134',
     trackingCode: 'TRR-D3342-P',
   },
@@ -146,7 +129,7 @@ export default function OrderDetailScreen() {
           </View>
         </View>
 
-        {/* Tracking code (non-cancelled) */}
+        {/* Tracking code */}
         {order.status !== 'Cancelado' && (
           <View style={styles.trackingCard}>
             <Package size={18} color={COLORS.brown} />
@@ -169,10 +152,7 @@ export default function OrderDetailScreen() {
           {order.items.map((item, index) => (
             <View
               key={item.id}
-              style={[
-                styles.itemRow,
-                index < order.items.length - 1 && styles.itemBorder,
-              ]}
+              style={[styles.itemRow, index < order.items.length - 1 && styles.itemBorder]}
             >
               <View style={styles.itemImageBox}>
                 <Text style={styles.itemEmoji}>{item.emoji}</Text>
@@ -273,70 +253,39 @@ const styles = StyleSheet.create({
   notFoundText: { fontSize: 16, color: COLORS.muted },
   content: { padding: 16, gap: 14, paddingBottom: 32 },
   statusCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    padding: 16, borderRadius: 14, borderWidth: 1,
   },
   statusEmoji: { fontSize: 28 },
   statusInfo: { flex: 1 },
   orderId: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
   orderDate: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
-  statusBadge: {
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
+  statusBadge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   statusBadgeText: { fontSize: 12, fontWeight: '700' },
   trackingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: COLORS.white, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border, padding: 14,
   },
   trackingInfo: { flex: 1 },
   trackingLabel: { fontSize: 11, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
   trackingCode: { fontSize: 15, fontWeight: '700', color: COLORS.darkBrown, fontFamily: 'monospace', marginTop: 2 },
   liveIndicator: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.green,
-  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.green },
   liveText: { fontSize: 12, color: COLORS.green, fontWeight: '600' },
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
-    gap: 12,
+    backgroundColor: COLORS.white, borderRadius: 14,
+    borderWidth: 1, borderColor: COLORS.border, padding: 16, gap: 12,
   },
   cardTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.darkBrown + '70',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    fontSize: 12, fontWeight: '700', color: COLORS.darkBrown + '70',
+    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4,
   },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingBottom: 12 },
   itemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
   itemImageBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: COLORS.lightBeige,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 52, height: 52, borderRadius: 10,
+    backgroundColor: COLORS.lightBeige, alignItems: 'center', justifyContent: 'center',
   },
   itemEmoji: { fontSize: 24 },
   itemInfo: { flex: 1 },
@@ -345,10 +294,8 @@ const styles = StyleSheet.create({
   itemPrice: { fontSize: 14, fontWeight: '700', color: COLORS.accent },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
   summaryRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: 10,
-    marginBottom: 2,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    paddingBottom: 10, marginBottom: 2,
   },
   summaryLabel: { fontSize: 14, color: COLORS.muted },
   summaryValue: { fontSize: 14, color: COLORS.darkBrown, fontWeight: '500' },
@@ -358,29 +305,18 @@ const styles = StyleSheet.create({
   addressText: { flex: 1, fontSize: 14, color: COLORS.darkBrown, lineHeight: 20 },
   actionsContainer: { gap: 10 },
   primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: COLORS.accent,
-    paddingVertical: 14,
-    borderRadius: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: COLORS.accent, paddingVertical: 14, borderRadius: 12,
   },
   primaryBtnText: { color: COLORS.darkBrown, fontSize: 15, fontWeight: '700' },
   outlineBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.border,
+    paddingVertical: 13, borderRadius: 12, alignItems: 'center',
   },
   outlineBtnText: { fontSize: 15, fontWeight: '600', color: COLORS.darkBrown },
   cancelledNote: {
-    backgroundColor: COLORS.redLight,
-    borderWidth: 1,
-    borderColor: COLORS.redBorder,
-    borderRadius: 10,
-    padding: 14,
+    backgroundColor: COLORS.redLight, borderWidth: 1,
+    borderColor: COLORS.redBorder, borderRadius: 10, padding: 14,
   },
   cancelledText: { fontSize: 13, color: '#991B1B', lineHeight: 18, textAlign: 'center' },
 });

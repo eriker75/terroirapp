@@ -13,8 +13,6 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="registro" />
           <Stack.Screen name="forgot-password" />
-          <Stack.Screen name="notificaciones" />
-          <Stack.Screen name="ordenes" />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

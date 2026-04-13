@@ -5,30 +5,63 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  ImageSourcePropType,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
 
+const PROMO_CODES: Record<string, number> = {
+  WELCOME: 5.0,
+  TERROIR10: 3.0,
+  CAFE20: 4.0,
+};
+
 interface CartItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
-  emoji: string;
+  image: ImageSourcePropType;
   description: string;
 }
 
 const initialCart: CartItem[] = [
-  { id: '1', name: 'Espresso Intenso Colombiano', price: 5.75, quantity: 2, emoji: '☕', description: 'Tueste oscuro' },
-  { id: '2', name: 'Cappuccino Artesanal', price: 6.50, quantity: 1, emoji: '☁️', description: 'Tradición italiana' },
-  { id: '3', name: 'Cold Brew Premium', price: 4.99, quantity: 1, emoji: '❄️', description: 'Refrescante' },
+  {
+    id: '1',
+    name: 'Espresso Intenso Colombiano',
+    price: 5.75,
+    quantity: 2,
+    image: require('../../../assets/images/products/espresso-obsidian.jpg'),
+    description: 'Tueste oscuro',
+  },
+  {
+    id: '2',
+    name: 'Cappuccino Artesanal',
+    price: 6.50,
+    quantity: 1,
+    image: require('../../../assets/images/cappuccino.jpg'),
+    description: 'Tradición italiana',
+  },
+  {
+    id: '3',
+    name: 'Cold Brew Premium',
+    price: 4.99,
+    quantity: 1,
+    image: require('../../../assets/images/cold-brew.jpg'),
+    description: 'Refrescante',
+  },
 ];
 
 export default function CartScreen() {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>(initialCart);
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState(false);
 
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) {
@@ -40,8 +73,20 @@ export default function CartScreen() {
 
   const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
 
+  const applyPromo = () => {
+    const code = promoInput.trim().toUpperCase();
+    if (PROMO_CODES[code]) {
+      setAppliedCode(code);
+      setPromoError(false);
+    } else {
+      setAppliedCode(null);
+      setPromoError(true);
+    }
+  };
+
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discount = items.length > 0 ? -5.0 : 0;
+  const discountAmount = appliedCode ? PROMO_CODES[appliedCode] : 0;
+  const discount = -discountAmount;
   const tax = items.length > 0 ? subtotal * 0.1 : 0;
   const shipping = items.length > 0 ? 3.0 : 0;
   const total = subtotal + discount + tax + shipping;
@@ -78,7 +123,7 @@ export default function CartScreen() {
               <View key={item.id} style={styles.itemCard}>
                 {/* Image */}
                 <View style={styles.itemImage}>
-                  <Text style={styles.itemEmoji}>{item.emoji}</Text>
+                  <Image source={item.image} style={styles.itemImg} resizeMode="cover" />
                 </View>
 
                 {/* Info */}
@@ -116,16 +161,32 @@ export default function CartScreen() {
             <View style={styles.promoSection}>
               <Text style={styles.promoLabel}>Código promocional</Text>
               <View style={styles.promoRow}>
-                <View style={styles.promoInput}>
-                  <Text style={styles.promoPlaceholder}>Ej. TERROIR20</Text>
-                </View>
-                <TouchableOpacity style={styles.promoApplyBtn}>
+                <TextInput
+                  style={styles.promoInput}
+                  value={promoInput}
+                  onChangeText={(t) => { setPromoInput(t); setPromoError(false); }}
+                  placeholder="Ej. WELCOME"
+                  placeholderTextColor={COLORS.muted}
+                  autoCapitalize="characters"
+                  returnKeyType="done"
+                  onSubmitEditing={applyPromo}
+                />
+                <TouchableOpacity style={styles.promoApplyBtn} onPress={applyPromo}>
                   <Text style={styles.promoApplyText}>Aplicar</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.promoApplied}>
-                <Text style={styles.promoAppliedText}>✓ Descuento WELCOME aplicado (-$5.00)</Text>
-              </View>
+              {appliedCode && (
+                <View style={styles.promoApplied}>
+                  <Text style={styles.promoAppliedText}>
+                    ✓ Descuento {appliedCode} aplicado (-${PROMO_CODES[appliedCode].toFixed(2)})
+                  </Text>
+                </View>
+              )}
+              {promoError && (
+                <View style={styles.promoError}>
+                  <Text style={styles.promoErrorText}>Código inválido o no encontrado</Text>
+                </View>
+              )}
             </View>
           </ScrollView>
 
@@ -135,10 +196,12 @@ export default function CartScreen() {
               <Text style={styles.summaryLabel}>Subtotal</Text>
               <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
             </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Descuento</Text>
-              <Text style={[styles.summaryValue, { color: COLORS.green }]}>${discount.toFixed(2)}</Text>
-            </View>
+            {appliedCode && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Descuento ({appliedCode})</Text>
+                <Text style={[styles.summaryValue, { color: COLORS.green }]}>-${discountAmount.toFixed(2)}</Text>
+              </View>
+            )}
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Impuesto (10%)</Text>
               <Text style={styles.summaryValue}>+${tax.toFixed(2)}</Text>
@@ -151,7 +214,11 @@ export default function CartScreen() {
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
             </View>
-            <TouchableOpacity style={styles.checkoutBtn}>
+            <TouchableOpacity
+              style={styles.checkoutBtn}
+              onPress={() => router.push('/checkout' as any)}
+              activeOpacity={0.85}
+            >
               <Text style={styles.checkoutBtnText}>Proceder a Pago</Text>
             </TouchableOpacity>
           </View>
@@ -214,11 +281,10 @@ const styles = StyleSheet.create({
     height: 76,
     backgroundColor: COLORS.lightBeige,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
     flexShrink: 0,
   },
-  itemEmoji: { fontSize: 32 },
+  itemImg: { width: '100%', height: '100%' },
   itemInfo: { flex: 1 },
   itemName: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
   itemDescription: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
@@ -282,6 +348,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   promoAppliedText: { color: COLORS.green, fontSize: 12, fontWeight: '500' },
+  promoError: {
+    backgroundColor: COLORS.redLight,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  promoErrorText: { color: COLORS.red, fontSize: 12, fontWeight: '500' },
   summary: {
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
