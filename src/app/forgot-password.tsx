@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -85,74 +86,74 @@ export default function ForgotPasswordScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color={COLORS.darkBrown} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Recuperar contraseña</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <ArrowLeft size={24} color={COLORS.darkBrown} />
+        </TouchableOpacity>
 
-        <View style={styles.body}>
-          {/* Intro */}
-          <View style={styles.introSection}>
-            <Text style={styles.introTitle}>¿Olvidaste tu contraseña?</Text>
-            <Text style={styles.introSubtitle}>
-              Ingresa tu email y te enviaremos un link para crear una nueva contraseña.
-            </Text>
-          </View>
-
-          {/* Error */}
-          {error !== '' && (
-            <View style={styles.errorBox}>
-              <AlertCircle size={18} color={COLORS.red} />
-              <Text style={styles.errorText}>{error}</Text>
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.forgotCard}>
+            {/* Dark Header part */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.brandName}>Recuperar</Text>
+              <Text style={styles.brandSubtitle}>Ingresa tu email para continuar</Text>
             </View>
-          )}
 
-          {/* Field */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Correo electrónico</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="tu@email.com"
-              placeholderTextColor={COLORS.darkBrown + '60'}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text style={styles.fieldHint}>Usa el email asociado a tu cuenta Terroir</Text>
+            {/* Body part */}
+            <View style={styles.cardBody}>
+              {/* Intro Text */}
+              <Text style={styles.introText}>
+                Te enviaremos un link para crear una nueva contraseña.
+              </Text>
+
+              {/* Error */}
+              {error !== '' && (
+                <View style={styles.errorBox}>
+                  <AlertCircle size={18} color={COLORS.red} />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
+              {/* Field */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Correo electrónico</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="tu@email.com"
+                  placeholderTextColor={COLORS.darkBrown + '60'}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text style={styles.fieldHint}>Usa el email asociado a tu cuenta Terroir</Text>
+              </View>
+
+              {/* Submit */}
+              <TouchableOpacity
+                style={[styles.accentBtn, isLoading && styles.btnDisabled]}
+                onPress={handleSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.darkBrown} />
+                ) : (
+                  <Text style={styles.accentBtnText}>Enviar instrucciones</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+              <TouchableOpacity onPress={() => router.push('/login')}>
+                <Text style={styles.loginLink}>¿Recordaste tu contraseña? Inicia sesión</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          {/* Submit */}
-          <TouchableOpacity
-            style={[styles.accentBtn, isLoading && styles.btnDisabled]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={COLORS.darkBrown} />
-            ) : (
-              <Text style={styles.accentBtnText}>Enviar instrucciones</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Tips */}
-          <View style={styles.tipsBox}>
-            <Text style={styles.tipsTitle}>Consejos:</Text>
-            <Text style={styles.tipItem}>• Revisa tu carpeta de spam</Text>
-            <Text style={styles.tipItem}>• El link es válido por 24 horas</Text>
-            <Text style={styles.tipItem}>• Si no solicitaste esto, ignora el email</Text>
-          </View>
-
-          <View style={styles.divider} />
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={styles.loginLink}>¿Recordaste tu contraseña? Inicia sesión</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -160,20 +161,61 @@ export default function ForgotPasswordScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+  backBtn: {
+    padding: 20,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 10,
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
-  body: { flex: 1, padding: 20, gap: 16 },
-  introSection: { gap: 6 },
-  introTitle: { fontSize: 20, fontWeight: '700', color: COLORS.darkBrown },
-  introSubtitle: { fontSize: 14, color: COLORS.muted, lineHeight: 20 },
+  content: { flex: 1 },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    paddingBottom: 40,
+  },
+  forgotCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    width: '100%',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  cardHeader: {
+    backgroundColor: COLORS.darkBrown,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  brandName: {
+    color: COLORS.white,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  brandSubtitle: {
+    color: COLORS.white + 'CC',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  cardBody: {
+    padding: 20,
+    gap: 16,
+  },
+  introText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -203,20 +245,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 4,
   },
   accentBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
-  tipsBox: {
-    backgroundColor: COLORS.accent + '1A',
-    borderWidth: 1,
-    borderColor: COLORS.accent + '33',
-    borderRadius: 10,
-    padding: 14,
-    gap: 4,
-  },
-  tipsTitle: { fontSize: 12, fontWeight: '700', color: COLORS.darkBrown, marginBottom: 2 },
-  tipItem: { fontSize: 12, color: COLORS.darkBrown + 'AA' },
-  divider: { borderTopWidth: 1, borderTopColor: COLORS.border },
+  divider: { borderTopWidth: 1, borderTopColor: COLORS.border, marginVertical: 4 },
   loginLink: { textAlign: 'center', fontSize: 14, color: COLORS.accent, fontWeight: '500' },
   // Success
   successContainer: {
@@ -254,6 +287,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   successHint: { fontSize: 13, color: COLORS.muted, textAlign: 'center', lineHeight: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
   outlineBtn: {
     borderWidth: 1,
     borderColor: COLORS.border,

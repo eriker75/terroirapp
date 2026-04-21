@@ -46,14 +46,9 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Dark header */}
-        <View style={styles.darkHeader}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={COLORS.white} />
-          </TouchableOpacity>
-          <Text style={styles.brandName}>Terroir</Text>
-          <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
-        </View>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <ArrowLeft size={24} color={COLORS.darkBrown} />
+        </TouchableOpacity>
 
         <ScrollView
           style={styles.content}
@@ -61,90 +56,94 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Error */}
-          {error !== '' && (
-            <View style={styles.errorBox}>
-              <AlertCircle size={18} color={COLORS.red} />
-              <Text style={styles.errorText}>{error}</Text>
+          <View style={styles.loginCard}>
+            {/* Dark Header part of the card */}
+            <View style={styles.cardHeader}>
+              <Text style={styles.brandName}>Terroir</Text>
+              <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
             </View>
-          )}
 
-          {/* Email */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Correo electrónico</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="tu@email.com"
-              placeholderTextColor={COLORS.darkBrown + '60'}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
+            {/* Form part of the card */}
+            <View style={styles.cardBody}>
+              {/* Error */}
+              {error !== '' && (
+                <View style={styles.errorBox}>
+                  <AlertCircle size={18} color={COLORS.red} />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
 
-          {/* Password */}
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.passwordRow}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="••••••••"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
+              {/* Email */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Correo electrónico</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="tu@email.com"
+                  placeholderTextColor={COLORS.darkBrown + '60'}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              {/* Password */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Contraseña</Text>
+                <View style={styles.passwordRow}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="••••••••"
+                    placeholderTextColor={COLORS.darkBrown + '60'}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeBtn}
+                    onPress={() => setShowPassword((v) => !v)}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color={COLORS.darkBrown + '80'} />
+                    ) : (
+                      <Eye size={20} color={COLORS.darkBrown + '80'} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Forgot password */}
               <TouchableOpacity
-                style={styles.eyeBtn}
-                onPress={() => setShowPassword((v) => !v)}
+                style={styles.forgotRow}
+                onPress={() => router.push('/forgot-password')}
               >
-                {showPassword ? (
-                  <EyeOff size={20} color={COLORS.darkBrown + '80'} />
+                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+              </TouchableOpacity>
+
+              {/* Submit */}
+              <TouchableOpacity
+                style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.darkBrown} />
                 ) : (
-                  <Eye size={20} color={COLORS.darkBrown + '80'} />
+                  <Text style={styles.submitBtnText}>Iniciar sesión</Text>
                 )}
               </TouchableOpacity>
+
+              {/* Register link */}
+              <View style={styles.divider} />
+              <View style={styles.registerRow}>
+                <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+                <TouchableOpacity onPress={() => router.push('/registro')}>
+                  <Text style={styles.registerLink}>Regístrate aquí</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-
-          {/* Forgot password */}
-          <TouchableOpacity
-            style={styles.forgotRow}
-            onPress={() => router.push('/forgot-password')}
-          >
-            <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-
-          {/* Submit */}
-          <TouchableOpacity
-            style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={COLORS.darkBrown} />
-            ) : (
-              <Text style={styles.submitBtnText}>Iniciar sesión</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Register link */}
-          <View style={styles.divider} />
-          <View style={styles.registerRow}>
-            <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={() => router.push('/registro')}>
-              <Text style={styles.registerLink}>Regístrate aquí</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Demo hint */}
-          <View style={styles.demoBox}>
-            <Text style={styles.demoTitle}>Demostración</Text>
-            <Text style={styles.demoText}>Email: customer@example.com</Text>
-            <Text style={styles.demoSubtext}>(Cualquier contraseña funciona)</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -154,25 +153,54 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
-  darkHeader: {
-    backgroundColor: COLORS.darkBrown,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 28,
+  backBtn: {
+    padding: 20,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    zIndex: 10,
   },
-  backBtn: { marginBottom: 12 },
+  content: { flex: 1 },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20,
+    paddingBottom: 40,
+  },
+  loginCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    width: '100%',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  cardHeader: {
+    backgroundColor: COLORS.darkBrown,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
   brandName: {
     color: COLORS.white,
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     marginBottom: 4,
   },
   brandSubtitle: {
     color: COLORS.white + 'CC',
-    fontSize: 14,
+    fontSize: 16,
+    textAlign: 'center',
   },
-  content: { flex: 1 },
-  contentContainer: { padding: 20, gap: 16, paddingBottom: 32 },
+  cardBody: {
+    padding: 20,
+    gap: 16,
+  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -219,7 +247,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
   },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
@@ -231,15 +259,4 @@ const styles = StyleSheet.create({
   registerRow: { flexDirection: 'row', justifyContent: 'center' },
   registerText: { fontSize: 14, color: COLORS.darkBrown + '99' },
   registerLink: { fontSize: 14, color: COLORS.accent, fontWeight: '600' },
-  demoBox: {
-    backgroundColor: COLORS.accent + '1A',
-    borderWidth: 1,
-    borderColor: COLORS.accent + '33',
-    borderRadius: 10,
-    padding: 14,
-    gap: 4,
-  },
-  demoTitle: { fontSize: 12, fontWeight: '700', color: COLORS.darkBrown },
-  demoText: { fontSize: 12, color: COLORS.darkBrown + 'AA', fontFamily: 'monospace' },
-  demoSubtext: { fontSize: 11, color: COLORS.darkBrown + '80' },
 });
