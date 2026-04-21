@@ -20,7 +20,7 @@ export interface Product {
 export const products: Product[] = [
   {
     id: '1',
-    name: 'Espresso Obsidian',
+    name: 'Espresso Terroir',
     description: 'Intenso y sofisticado',
     longDescription: 'Nuestro espresso insignia con notas profundas de chocolate y cacao.',
     price: 5.00,
@@ -31,7 +31,7 @@ export const products: Product[] = [
     reviewCount: 324,
     inStock: true,
     stock: 50,
-    image: require('../../assets/images/products/espresso-obsidian.jpg'),
+    image: require('../../assets/images/products/espresso-terroir.jpg'),
   },
   {
     id: '2',

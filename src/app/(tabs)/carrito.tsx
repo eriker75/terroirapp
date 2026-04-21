@@ -35,7 +35,7 @@ const initialCart: CartItem[] = [
     name: 'Espresso Intenso Colombiano',
     price: 5.75,
     quantity: 2,
-    image: require('../../../assets/images/products/espresso-obsidian.jpg'),
+    image: require('../../../assets/images/products/espresso-terroir.jpg'),
     description: 'Tueste oscuro',
   },
   {
