@@ -9,7 +9,6 @@ import {
   ImageSourcePropType,
   TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -92,7 +91,7 @@ export default function CartScreen() {
   const total = subtotal + discount + tax + shipping;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Carrito</Text>
@@ -224,7 +223,7 @@ export default function CartScreen() {
           </View>
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -7,10 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -54,7 +51,7 @@ export default function RegisterScreen() {
 
   if (success) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <View style={styles.container}>
         <View style={styles.successContainer}>
           <View style={styles.successIcon}>
             <CheckCircle2 size={48} color={COLORS.accent} />
@@ -70,152 +67,144 @@ export default function RegisterScreen() {
             <Text style={styles.submitBtnText}>Comenzar a explorar</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <ArrowLeft size={24} color={COLORS.darkBrown} />
+      </TouchableOpacity>
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.registerCard}>
-            {/* Dark Header part of the card */}
-            <View style={styles.cardHeader}>
-              <Text style={styles.brandName}>Crear cuenta</Text>
-              <Text style={styles.brandSubtitle}>Únete a la comunidad Terroir</Text>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.registerCard}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.brandName}>Crear cuenta</Text>
+            <Text style={styles.brandSubtitle}>Únete a la comunidad Terroir</Text>
+          </View>
+
+          <View style={styles.cardBody}>
+            {error !== '' && (
+              <View style={styles.errorBox}>
+                <AlertCircle size={18} color={COLORS.red} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Nombre completo</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Juan Pérez"
+                placeholderTextColor={COLORS.darkBrown + '60'}
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+              />
             </View>
 
-            {/* Form part of the card */}
-            <View style={styles.cardBody}>
-              {error !== '' && (
-                <View style={styles.errorBox}>
-                  <AlertCircle size={18} color={COLORS.red} />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              )}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Correo electrónico</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="tu@email.com"
+                placeholderTextColor={COLORS.darkBrown + '60'}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Nombre completo</Text>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Contraseña</Text>
+              <View style={styles.passwordRow}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="Juan Pérez"
+                  style={styles.passwordInput}
+                  placeholder="Mínimo 6 caracteres"
                   placeholderTextColor={COLORS.darkBrown + '60'}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Correo electrónico</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="tu@email.com"
-                  placeholderTextColor={COLORS.darkBrown + '60'}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  autoCorrect={false}
                 />
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Contraseña</Text>
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Mínimo 6 caracteres"
-                    placeholderTextColor={COLORS.darkBrown + '60'}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                  />
-                  <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword((v) => !v)}>
-                    {showPassword ? (
-                      <EyeOff size={20} color={COLORS.darkBrown + '80'} />
-                    ) : (
-                      <Eye size={20} color={COLORS.darkBrown + '80'} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Confirmar contraseña</Text>
-                <View style={[styles.passwordRow, confirm && confirm !== password && styles.inputError]}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Repite la contraseña"
-                    placeholderTextColor={COLORS.darkBrown + '60'}
-                    value={confirm}
-                    onChangeText={setConfirm}
-                    secureTextEntry={!showConfirm}
-                    autoCapitalize="none"
-                  />
-                  <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowConfirm((v) => !v)}>
-                    {showConfirm ? (
-                      <EyeOff size={20} color={COLORS.darkBrown + '80'} />
-                    ) : (
-                      <Eye size={20} color={COLORS.darkBrown + '80'} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-                {confirm !== '' && confirm !== password && (
-                  <Text style={styles.fieldError}>Las contraseñas no coinciden</Text>
-                )}
-              </View>
-
-              {/* Terms */}
-              <Text style={styles.terms}>
-                Al registrarte aceptas nuestros{' '}
-                <Text style={styles.termsLink}>Términos de Servicio</Text>
-                {' '}y{' '}
-                <Text style={styles.termsLink}>Política de Privacidad</Text>
-              </Text>
-
-              <TouchableOpacity
-                style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
-                onPress={handleRegister}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color={COLORS.darkBrown} />
-                ) : (
-                  <Text style={styles.submitBtnText}>Crear cuenta</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-              <View style={styles.loginRow}>
-                <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')}>
-                  <Text style={styles.loginLink}>Inicia sesión</Text>
+                <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword((v) => !v)}>
+                  {showPassword ? (
+                    <EyeOff size={20} color={COLORS.darkBrown + '80'} />
+                  ) : (
+                    <Eye size={20} color={COLORS.darkBrown + '80'} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Confirmar contraseña</Text>
+              <View style={[styles.passwordRow, confirm && confirm !== password && styles.inputError]}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Repite la contraseña"
+                  placeholderTextColor={COLORS.darkBrown + '60'}
+                  value={confirm}
+                  onChangeText={setConfirm}
+                  secureTextEntry={!showConfirm}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowConfirm((v) => !v)}>
+                  {showConfirm ? (
+                    <EyeOff size={20} color={COLORS.darkBrown + '80'} />
+                  ) : (
+                    <Eye size={20} color={COLORS.darkBrown + '80'} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {confirm !== '' && confirm !== password && (
+                <Text style={styles.fieldError}>Las contraseñas no coinciden</Text>
+              )}
+            </View>
+
+            <Text style={styles.terms}>
+              Al registrarte aceptas nuestros{' '}
+              <Text style={styles.termsLink}>Términos de Servicio</Text>
+              {' '}y{' '}
+              <Text style={styles.termsLink}>Política de Privacidad</Text>
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.darkBrown} />
+              ) : (
+                <Text style={styles.submitBtnText}>Crear cuenta</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+            <View style={styles.loginRow}>
+              <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => router.push('/login')}>
+                <Text style={styles.loginLink}>Inicia sesión</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  container: { flex: 1, backgroundColor: COLORS.lightBeige },
   backBtn: {
     padding: 20,
     position: 'absolute',
@@ -320,7 +309,6 @@ const styles = StyleSheet.create({
   loginRow: { flexDirection: 'row', justifyContent: 'center' },
   loginText: { fontSize: 14, color: COLORS.darkBrown + '99' },
   loginLink: { fontSize: 14, color: COLORS.accent, fontWeight: '600' },
-  // Success state
   successContainer: {
     flex: 1,
     alignItems: 'center',

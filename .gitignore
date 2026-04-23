@@ -9,7 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native - let EAS run prebuild in the cloud
+/android
+/ios
 .kotlin/
 *.orig.*
 *.jks

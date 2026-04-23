@@ -7,29 +7,28 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <ImageBackground 
-      source={require('@/assets/images/hero-coffee.jpg')} 
-      style={styles.backgroundImage} 
+    <ImageBackground
+      source={require('@/assets/images/hero-coffee.jpg')}
+      style={styles.backgroundImage}
       resizeMode="cover"
     >
-      {/* Overlay to blend the image nicely and ensure text contrast */}
       <View style={styles.imageOverlay} />
 
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View style={styles.contentContainer}>
           <View style={styles.card}>
             <Text style={styles.welcomeTitle}>Bienvenido a</Text>
-            <Image 
+            <Image
               source={require('@/assets/images/logo/terroir-dark-coffe-text.png')}
               style={styles.logo}
               resizeMode="contain"
             />
-            
+
             <Text style={styles.welcomeText}>
               Descubre nuestra selección de café de especialidad y vive una experiencia única.
             </Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.primaryButton}
               onPress={() => router.push('/login')}
               activeOpacity={0.8}
@@ -37,7 +36,7 @@ export default function WelcomeScreen() {
               <Text style={styles.primaryButtonText}>Iniciar sesión</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => router.push('/registro')}
               activeOpacity={0.8}
@@ -59,7 +58,7 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(54, 30, 28, 0.45)', // Dark brown with opacity for contrast
+    backgroundColor: 'rgba(54, 30, 28, 0.45)',
   },
   safeArea: {
     flex: 1,
@@ -80,7 +79,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center', // Center content in the card
+    alignItems: 'center',
   },
   welcomeTitle: {
     fontSize: 24,
@@ -102,7 +101,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   primaryButton: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.brown,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',

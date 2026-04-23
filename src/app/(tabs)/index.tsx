@@ -9,7 +9,6 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -56,10 +55,14 @@ export default function HomeScreen() {
   const featuredProducts = products.slice(0, 4);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Terroir</Text>
+        <Image
+            source={require('../../../assets/images/logo/terroir-dark-coffe-text.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notificaciones')}>
           <Bell size={22} color={COLORS.darkBrown} />
           <View style={styles.bellBadge}>
@@ -191,7 +194,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -210,10 +213,9 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.lightBeige,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.darkBrown,
+  headerLogo: {
+    width: 120,
+    height: 36,
   },
   bellBtn: {
     position: 'relative',

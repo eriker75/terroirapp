@@ -7,11 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -42,122 +39,109 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <ArrowLeft size={24} color={COLORS.darkBrown} />
+      </TouchableOpacity>
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.loginCard}>
-            {/* Dark Header part of the card */}
-            <View style={styles.cardHeader}>
-              <Image
-                source={require('@/assets/images/logo/terroir-cream-coffe-text.png')}
-                style={styles.brandLogo}
-                resizeMode="contain"
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.loginCard}>
+          <View style={styles.cardHeader}>
+            <Image
+              source={require('@/assets/images/logo/terroir-cream-coffe-text.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
+          </View>
+
+          <View style={styles.cardBody}>
+            {error !== '' && (
+              <View style={styles.errorBox}>
+                <AlertCircle size={18} color={COLORS.red} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Correo electrónico</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="tu@email.com"
+                placeholderTextColor={COLORS.darkBrown + '60'}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
               />
-              <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
             </View>
 
-            {/* Form part of the card */}
-            <View style={styles.cardBody}>
-              {/* Error */}
-              {error !== '' && (
-                <View style={styles.errorBox}>
-                  <AlertCircle size={18} color={COLORS.red} />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              )}
-
-              {/* Email */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Correo electrónico</Text>
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Contraseña</Text>
+              <View style={styles.passwordRow}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="tu@email.com"
+                  style={styles.passwordInput}
+                  placeholder="••••••••"
                   placeholderTextColor={COLORS.darkBrown + '60'}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  autoCorrect={false}
                 />
-              </View>
-
-              {/* Password */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Contraseña</Text>
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="••••••••"
-                    placeholderTextColor={COLORS.darkBrown + '60'}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeBtn}
-                    onPress={() => setShowPassword((v) => !v)}
-                  >
-                    {showPassword ? (
-                      <EyeOff size={20} color={COLORS.darkBrown + '80'} />
-                    ) : (
-                      <Eye size={20} color={COLORS.darkBrown + '80'} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Forgot password */}
-              <TouchableOpacity
-                style={styles.forgotRow}
-                onPress={() => router.push('/forgot-password')}
-              >
-                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
-              </TouchableOpacity>
-
-              {/* Submit */}
-              <TouchableOpacity
-                style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color={COLORS.darkBrown} />
-                ) : (
-                  <Text style={styles.submitBtnText}>Iniciar sesión</Text>
-                )}
-              </TouchableOpacity>
-
-              {/* Register link */}
-              <View style={styles.divider} />
-              <View style={styles.registerRow}>
-                <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-                <TouchableOpacity onPress={() => router.push('/registro')}>
-                  <Text style={styles.registerLink}>Regístrate aquí</Text>
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={COLORS.darkBrown + '80'} />
+                  ) : (
+                    <Eye size={20} color={COLORS.darkBrown + '80'} />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={styles.forgotRow}
+              onPress={() => router.push('/forgot-password')}
+            >
+              <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.darkBrown} />
+              ) : (
+                <Text style={styles.submitBtnText}>Iniciar sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+            <View style={styles.registerRow}>
+              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+              <TouchableOpacity onPress={() => router.push('/registro')}>
+                <Text style={styles.registerLink}>Regístrate aquí</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  container: { flex: 1, backgroundColor: COLORS.lightBeige },
   backBtn: {
     padding: 20,
     position: 'absolute',

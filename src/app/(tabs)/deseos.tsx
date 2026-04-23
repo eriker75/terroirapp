@@ -6,10 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Alert,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -29,14 +27,7 @@ export default function DeseosScreen() {
   const favoriteProducts = products.filter((p) => favorites.includes(p.id));
 
   const removeFromFavorites = (id: string) => {
-    Alert.alert('Quitar favorito', '¿Quitar este producto de tus favoritos?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Quitar',
-        style: 'destructive',
-        onPress: () => setFavorites((prev) => prev.filter((f) => f !== id)),
-      },
-    ]);
+    setFavorites((prev) => prev.filter((f) => f !== id));
   };
 
   const clearAll = () => {
@@ -47,7 +38,7 @@ export default function DeseosScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mis Deseos</Text>
@@ -140,7 +131,7 @@ export default function DeseosScreen() {
           ))}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -231,7 +222,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   discountText: { color: COLORS.darkBrown, fontSize: 10, fontWeight: '700' },
-  cardInfo: { padding: 12, gap: 3 },
+  cardInfo: { flex: 1, padding: 12, gap: 3 },
   cardCategory: { fontSize: 10, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
   cardName: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
   cardDesc: { fontSize: 11, color: COLORS.muted },

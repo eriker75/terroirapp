@@ -8,7 +8,6 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Heart, ShoppingCart, Star, MapPin, Flame, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -36,14 +35,14 @@ export default function ProductDetailScreen() {
 
   if (!product) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.safeArea}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ArrowLeft size={22} color={COLORS.darkBrown} />
         </TouchableOpacity>
         <View style={styles.notFound}>
           <Text style={styles.notFoundText}>Producto no encontrado</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -67,7 +66,7 @@ export default function ProductDetailScreen() {
     product.category === 'beverages' ? 'Bebida' : 'Accesorio';
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       {/* Floating back + wishlist */}
       <View style={styles.floatingBar}>
         <TouchableOpacity style={styles.floatingBtn} onPress={() => router.back()}>
@@ -213,7 +212,7 @@ export default function ProductDetailScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

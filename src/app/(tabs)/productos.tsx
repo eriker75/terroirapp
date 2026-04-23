@@ -27,7 +27,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const PAGE_SIZE = 10;
@@ -180,7 +179,7 @@ export default function ProductsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Productos</Text>
@@ -310,7 +309,7 @@ export default function ProductsScreen() {
           ))}
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 

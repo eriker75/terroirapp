@@ -7,10 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -41,7 +38,7 @@ export default function ForgotPasswordScreen() {
 
   if (submitted) {
     return (
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/login')}>
             <ArrowLeft size={24} color={COLORS.darkBrown} />
@@ -76,91 +73,80 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.outlineBtnText}>Volver a iniciar sesión</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <ArrowLeft size={24} color={COLORS.darkBrown} />
+      </TouchableOpacity>
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
-
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.forgotCard}>
-            {/* Dark Header part */}
-            <View style={styles.cardHeader}>
-              <Text style={styles.brandName}>Recuperar</Text>
-              <Text style={styles.brandSubtitle}>Ingresa tu email para continuar</Text>
-            </View>
-
-            {/* Body part */}
-            <View style={styles.cardBody}>
-              {/* Intro Text */}
-              <Text style={styles.introText}>
-                Te enviaremos un link para crear una nueva contraseña.
-              </Text>
-
-              {/* Error */}
-              {error !== '' && (
-                <View style={styles.errorBox}>
-                  <AlertCircle size={18} color={COLORS.red} />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              )}
-
-              {/* Field */}
-              <View style={styles.fieldGroup}>
-                <Text style={styles.label}>Correo electrónico</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="tu@email.com"
-                  placeholderTextColor={COLORS.darkBrown + '60'}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <Text style={styles.fieldHint}>Usa el email asociado a tu cuenta Terroir</Text>
-              </View>
-
-              {/* Submit */}
-              <TouchableOpacity
-                style={[styles.accentBtn, isLoading && styles.btnDisabled]}
-                onPress={handleSubmit}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color={COLORS.darkBrown} />
-                ) : (
-                  <Text style={styles.accentBtnText}>Enviar instrucciones</Text>
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.divider} />
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.loginLink}>¿Recordaste tu contraseña? Inicia sesión</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.forgotCard}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.brandName}>Recuperar</Text>
+            <Text style={styles.brandSubtitle}>Ingresa tu email para continuar</Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+          <View style={styles.cardBody}>
+            <Text style={styles.introText}>
+              Te enviaremos un link para crear una nueva contraseña.
+            </Text>
+
+            {error !== '' && (
+              <View style={styles.errorBox}>
+                <AlertCircle size={18} color={COLORS.red} />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Correo electrónico</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="tu@email.com"
+                placeholderTextColor={COLORS.darkBrown + '60'}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Text style={styles.fieldHint}>Usa el email asociado a tu cuenta Terroir</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.accentBtn, isLoading && styles.btnDisabled]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.darkBrown} />
+              ) : (
+                <Text style={styles.accentBtnText}>Enviar instrucciones</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+            <TouchableOpacity onPress={() => router.push('/login')}>
+              <Text style={styles.loginLink}>¿Recordaste tu contraseña? Inicia sesión</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  container: { flex: 1, backgroundColor: COLORS.lightBeige },
   backBtn: {
     padding: 20,
     position: 'absolute',
@@ -246,12 +232,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 4,
+    width: '100%',
   },
   accentBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
   divider: { borderTopWidth: 1, borderTopColor: COLORS.border, marginVertical: 4 },
   loginLink: { textAlign: 'center', fontSize: 14, color: COLORS.accent, fontWeight: '500' },
-  // Success
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
   successContainer: {
     flex: 1,
     padding: 24,
@@ -287,16 +283,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   successHint: { fontSize: 13, color: COLORS.muted, textAlign: 'center', lineHeight: 20 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
   outlineBtn: {
     borderWidth: 1,
     borderColor: COLORS.border,
