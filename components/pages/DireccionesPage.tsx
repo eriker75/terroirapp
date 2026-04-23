@@ -41,7 +41,12 @@ const initialAddresses: Address[] = [
   },
 ];
 
-export default function AddressesScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+}
+
+export default function DireccionesPage({ showBackButton = false, onBack }: Props) {
   const router = useRouter();
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [modalOpen, setModalOpen] = useState(false);
@@ -96,13 +101,25 @@ export default function AddressesScreen() {
     );
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Mis Direcciones</Text>
         <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
           <Plus size={22} color={COLORS.accent} />

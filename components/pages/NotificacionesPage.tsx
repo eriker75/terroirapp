@@ -82,7 +82,13 @@ const initialNotifications: Notification[] = [
 
 type FilterTab = 'all' | 'unread';
 
-export default function NotificationsScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  useSafeArea?: boolean;
+}
+
+export default function NotificacionesPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [filter, setFilter] = useState<FilterTab>('all');
@@ -100,13 +106,25 @@ export default function NotificationsScreen() {
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
+  const Content = (
+    <>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Notificaciones</Text>
         {unreadCount > 0 ? (
           <View style={styles.unreadBadge}>
@@ -176,8 +194,18 @@ export default function NotificationsScreen() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </>
   );
+
+  if (useSafeArea) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {Content}
+      </SafeAreaView>
+    );
+  }
+
+  return <View style={styles.safeArea}>{Content}</View>;
 }
 
 const styles = StyleSheet.create({

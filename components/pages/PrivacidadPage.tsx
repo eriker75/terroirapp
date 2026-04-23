@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -61,19 +62,37 @@ const sections = [
   },
 ];
 
-export default function PrivacyScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  useSafeArea?: boolean;
+}
+
+export default function PrivacidadPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(1);
 
   const toggle = (id: number) => setExpanded((prev) => (prev === id ? null : id));
 
-  return (
-    <View style={styles.safeArea}>
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
+  const Content = (
+    <>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Política de Privacidad</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -127,8 +146,18 @@ export default function PrivacyScreen() {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </>
   );
+
+  if (useSafeArea) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {Content}
+      </SafeAreaView>
+    );
+  }
+
+  return <View style={styles.safeArea}>{Content}</View>;
 }
 
 const styles = StyleSheet.create({

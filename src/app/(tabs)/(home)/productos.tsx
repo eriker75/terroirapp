@@ -2,6 +2,7 @@ import { VStack } from '@/components/ui/vstack';
 import { COLORS } from '@/src/constants/colors';
 import { Product, products } from '@/src/data/products';
 import { useRouter } from 'expo-router';
+import HeaderLayout from '@/src/components/layouts/HeaderLayout';
 import {
   Check,
   Grid3X3,
@@ -169,7 +170,7 @@ export default function ProductsScreen() {
   const EmptyState = () => (
     <VStack style={styles.emptyState}>
       <Image
-        source={require('../../../assets/images/404Coffe.png')}
+        source={require('@/assets/images/404Coffe.png')}
         style={styles.emptyImage}
         resizeMode="contain"
       />
@@ -179,137 +180,139 @@ export default function ProductsScreen() {
   );
 
   return (
-    <View style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Productos</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersOpen(true)}>
-            <Sliders size={20} color={COLORS.darkBrown} />
-          </TouchableOpacity>
-          <View style={styles.viewToggle}>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'grid' && styles.toggleBtnActive]}
-              onPress={() => setViewMode('grid')}
-            >
-              <Grid3X3 size={16} color={viewMode === 'grid' ? COLORS.darkBrown : COLORS.darkBrown + '60'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
-              onPress={() => setViewMode('list')}
-            >
-              <List size={16} color={viewMode === 'list' ? COLORS.darkBrown : COLORS.darkBrown + '60'} />
-            </TouchableOpacity>
+    <HeaderLayout>
+      <View style={styles.safeArea}>
+        <VStack>
+          {/* Custom Header Row for Products */}
+          <View style={styles.headerRow}>
+            <Text style={styles.headerTitle}>Productos</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersOpen(true)}>
+                <Sliders size={20} color={COLORS.darkBrown} />
+              </TouchableOpacity>
+              <View style={styles.viewToggle}>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, viewMode === 'grid' && styles.toggleBtnActive]}
+                  onPress={() => setViewMode('grid')}
+                >
+                  <Grid3X3 size={16} color={viewMode === 'grid' ? COLORS.darkBrown : COLORS.darkBrown + '60'} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+                  onPress={() => setViewMode('list')}
+                >
+                  <List size={16} color={viewMode === 'list' ? COLORS.darkBrown : COLORS.darkBrown + '60'} />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
 
-      <VStack>
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <Search size={16} color={COLORS.darkBrown + '80'} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar café, origen, tostado..."
-            placeholderTextColor={COLORS.darkBrown + '60'}
-            value={search}
-            onChangeText={setSearch}
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <X size={15} color={COLORS.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
+          {/* Search */}
+          <View style={styles.searchContainer}>
+            <Search size={16} color={COLORS.darkBrown + '80'} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar café, origen, tostado..."
+              placeholderTextColor={COLORS.darkBrown + '60'}
+              value={search}
+              onChangeText={setSearch}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch('')}>
+                <X size={15} color={COLORS.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
 
-        {/* Filter badges slider */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.pillsRow}
-        >
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f.id}
-              style={[styles.pill, filter === f.id && styles.pillActive]}
-              onPress={() => setFilter(f.id)}
-            >
-              <Text style={[styles.pillText, filter === f.id && styles.pillTextActive]}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+          {/* Filter badges slider */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.pillsRow}
+          >
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f.id}
+                style={[styles.pill, filter === f.id && styles.pillActive]}
+                onPress={() => setFilter(f.id)}
+              >
+                <Text style={[styles.pillText, filter === f.id && styles.pillTextActive]}>
+                  {f.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        {/* Results row */}
-        <View style={styles.resultsRow}>
-          <Text style={styles.resultsText}>
-            {visible.length} de {allFiltered.length} productos
-          </Text>
-          {sortBy !== 'newest' && (
-            <Text style={styles.sortIndicator}>
-              {SORT_OPTIONS.find((s) => s.id === sortBy)?.label}
+          {/* Results row */}
+          <View style={styles.resultsRow}>
+            <Text style={styles.resultsText}>
+              {visible.length} de {allFiltered.length} productos
             </Text>
-          )}
-        </View>
-      </VStack>
-
-      {/* FlatList — key forces remount when columns change */}
-      {viewMode === 'grid' ? (
-        <FlatList
-          key="grid"
-          data={visible}
-          keyExtractor={(item) => item.id}
-          renderItem={renderGridItem}
-          numColumns={2}
-          columnWrapperStyle={styles.gridRow}
-          contentContainerStyle={styles.flatContent}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
-          ListFooterComponent={ListFooter}
-          ListEmptyComponent={EmptyState}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <FlatList
-          key="list"
-          data={visible}
-          keyExtractor={(item) => item.id}
-          renderItem={renderListItem}
-          contentContainerStyle={styles.flatContentList}
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
-          ListFooterComponent={ListFooter}
-          ListEmptyComponent={EmptyState}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-
-      {/* Sort Modal */}
-      <Modal visible={filtersOpen} transparent animationType="slide">
-        <Pressable style={styles.overlay} onPress={() => setFiltersOpen(false)} />
-        <View style={styles.filterSheet}>
-          <View style={styles.filterHeader}>
-            <Text style={styles.filterTitle}>Ordenar por</Text>
-            <TouchableOpacity onPress={() => setFiltersOpen(false)}>
-              <X size={20} color={COLORS.darkBrown} />
-            </TouchableOpacity>
-          </View>
-          {SORT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.id}
-              style={styles.sortOption}
-              onPress={() => { setSortBy(opt.id as SortBy); setFiltersOpen(false); }}
-            >
-              <Text style={[styles.sortOptionText, sortBy === opt.id && styles.sortOptionActive]}>
-                {opt.label}
+            {sortBy !== 'newest' && (
+              <Text style={styles.sortIndicator}>
+                {SORT_OPTIONS.find((s) => s.id === sortBy)?.label}
               </Text>
-              {sortBy === opt.id && <Check size={16} color={COLORS.accent} />}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Modal>
-    </View>
+            )}
+          </View>
+        </VStack>
+
+        {/* FlatList — key forces remount when columns change */}
+        {viewMode === 'grid' ? (
+          <FlatList
+            key="grid"
+            data={visible}
+            keyExtractor={(item) => item.id}
+            renderItem={renderGridItem}
+            numColumns={2}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={styles.flatContent}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={ListFooter}
+            ListEmptyComponent={EmptyState}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <FlatList
+            key="list"
+            data={visible}
+            keyExtractor={(item) => item.id}
+            renderItem={renderListItem}
+            contentContainerStyle={styles.flatContentList}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.3}
+            ListFooterComponent={ListFooter}
+            ListEmptyComponent={EmptyState}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+
+        {/* Sort Modal */}
+        <Modal visible={filtersOpen} transparent animationType="slide">
+          <Pressable style={styles.overlay} onPress={() => setFiltersOpen(false)} />
+          <View style={styles.filterSheet}>
+            <View style={styles.filterHeader}>
+              <Text style={styles.filterTitle}>Ordenar por</Text>
+              <TouchableOpacity onPress={() => setFiltersOpen(false)}>
+                <X size={20} color={COLORS.darkBrown} />
+              </TouchableOpacity>
+            </View>
+            {SORT_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.id}
+                style={styles.sortOption}
+                onPress={() => { setSortBy(opt.id as SortBy); setFiltersOpen(false); }}
+              >
+                <Text style={[styles.sortOptionText, sortBy === opt.id && styles.sortOptionActive]}>
+                  {opt.label}
+                </Text>
+                {sortBy === opt.id && <Check size={16} color={COLORS.accent} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Modal>
+      </View>
+    </HeaderLayout>
   );
 }
 
@@ -412,10 +415,9 @@ const cardW = (width - 44) / 2;
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
-  header: {
+  headerRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.darkBrown },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },

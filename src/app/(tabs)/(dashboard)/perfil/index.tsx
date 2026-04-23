@@ -25,7 +25,7 @@ const menuSections = [
   {
     title: 'Mi Cuenta',
     items: [
-      { icon: ShoppingBag, label: 'Mis Órdenes', badge: '5', route: '/ordenes' },
+      { icon: ShoppingBag, label: 'Mis Órdenes', badge: '5', route: '/perfil/ordenes' },
       { icon: Heart, label: 'Mis Favoritos', badge: '12', route: '/perfil/favoritos' },
       { icon: MapPin, label: 'Mis Direcciones', badge: null, route: '/perfil/direcciones' },
       { icon: CreditCard, label: 'Mis Tarjetas', badge: null, route: '/perfil/tarjetas' },
@@ -47,7 +47,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert('Cerrar Sesión', '¿Estás seguro de que quieres cerrar sesión?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sí, salir', style: 'destructive', onPress: () => router.replace('/login') },
+      { text: 'Sí, salir', style: 'destructive', onPress: () => router.replace('/welcome') },
     ]);
   };
 
@@ -74,11 +74,11 @@ export default function ProfileScreen() {
 
         {/* Quick Stats */}
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/ordenes' as any)}>
+          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/perfil/ordenes' as any)}>
             <Text style={styles.statValue}>5</Text>
             <Text style={styles.statLabel}>Pedidos</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statCard}>
+          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/perfil/favoritos' as any)}>
             <Text style={styles.statValue}>12</Text>
             <Text style={styles.statLabel}>Favoritos</Text>
           </TouchableOpacity>

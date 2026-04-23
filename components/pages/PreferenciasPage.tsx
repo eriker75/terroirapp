@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Bell, Mail, Globe, DollarSign, Moon, Vibrate } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
@@ -23,7 +24,13 @@ interface ToggleSetting {
 type Language = 'es' | 'en';
 type Currency = 'USD' | 'EUR' | 'MXN';
 
-export default function SettingsScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  useSafeArea?: boolean;
+}
+
+export default function PreferenciasPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
 
   const [toggles, setToggles] = useState<ToggleSetting[]>([
@@ -73,13 +80,25 @@ export default function SettingsScreen() {
     ]);
   };
 
-  return (
-    <View style={styles.safeArea}>
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
+  const Content = (
+    <>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Preferencias</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -191,8 +210,18 @@ export default function SettingsScreen() {
           <Text style={styles.versionSub}>Todos los derechos reservados © 2024</Text>
         </View>
       </ScrollView>
-    </View>
+    </>
   );
+
+  if (useSafeArea) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {Content}
+      </SafeAreaView>
+    );
+  }
+
+  return <View style={styles.safeArea}>{Content}</View>;
 }
 
 const styles = StyleSheet.create({

@@ -42,7 +42,12 @@ const BRAND_EMOJI: Record<string, string> = {
   Amex: '💳',
 };
 
-export default function CardsScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+}
+
+export default function TarjetasPage({ showBackButton = false, onBack }: Props) {
   const router = useRouter();
   const [cards, setCards] = useState<Card[]>(initialCards);
   const [modalOpen, setModalOpen] = useState(false);
@@ -84,13 +89,25 @@ export default function CardsScreen() {
     setForm({ number: '', holder: '', expires: '', cvv: '' });
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Mis Tarjetas</Text>
         <TouchableOpacity onPress={() => setModalOpen(true)}>
           <Plus size={24} color={COLORS.accent} />

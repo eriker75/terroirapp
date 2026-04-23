@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { ChevronRight, ShoppingBag } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft, ChevronRight, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
 
@@ -22,11 +23,51 @@ interface Order {
 }
 
 const orders: Order[] = [
-  { id: '1', orderId: '#576404', date: '20 Mar 2024', status: 'Entregado', total: '$89.00', items: 3, emoji: '☕' },
-  { id: '2', orderId: '#741235', date: '19 Mar 2024', status: 'En camino', total: '$45.50', items: 2, emoji: '📦' },
-  { id: '3', orderId: '#545455', date: '15 Mar 2024', status: 'Procesando', total: '$32.75', items: 1, emoji: '🔄' },
-  { id: '4', orderId: '#312890', date: '8 Mar 2024', status: 'Cancelado', total: '$120.00', items: 4, emoji: '❌' },
-  { id: '5', orderId: '#198743', date: '1 Mar 2024', status: 'Entregado', total: '$27.25', items: 1, emoji: '☕' },
+  {
+    id: '1',
+    orderId: '#576404',
+    date: '20 Mar 2024',
+    status: 'Entregado',
+    total: '$89.00',
+    items: 3,
+    emoji: '☕',
+  },
+  {
+    id: '2',
+    orderId: '#741235',
+    date: '19 Mar 2024',
+    status: 'En camino',
+    total: '$45.50',
+    items: 2,
+    emoji: '📦',
+  },
+  {
+    id: '3',
+    orderId: '#545455',
+    date: '15 Mar 2024',
+    status: 'Procesando',
+    total: '$32.75',
+    items: 1,
+    emoji: '🔄',
+  },
+  {
+    id: '4',
+    orderId: '#312890',
+    date: '8 Mar 2024',
+    status: 'Cancelado',
+    total: '$120.00',
+    items: 4,
+    emoji: '❌',
+  },
+  {
+    id: '5',
+    orderId: '#198743',
+    date: '1 Mar 2024',
+    status: 'Entregado',
+    total: '$27.25',
+    items: 1,
+    emoji: '☕',
+  },
 ];
 
 const statusConfig: Record<OrderStatus, { bg: string; text: string; border: string }> = {
@@ -36,14 +77,36 @@ const statusConfig: Record<OrderStatus, { bg: string; text: string; border: stri
   Cancelado: { bg: COLORS.redLight, text: '#991B1B', border: COLORS.redBorder },
 };
 
-export default function OrdersScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  useSafeArea?: boolean;
+}
+
+export default function OrdenesPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
 
-  return (
-    <View style={styles.safeArea}>
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
+  const Content = (
+    <>
       {/* Header */}
       <View style={styles.header}>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
         <Text style={styles.headerTitle}>Mis Órdenes</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       {/* Summary strip */}
@@ -81,23 +144,26 @@ export default function OrdersScreen() {
           orders.map((order) => {
             const cfg = statusConfig[order.status];
             return (
-              <TouchableOpacity
-                key={order.id}
-                style={styles.orderCard}
-                activeOpacity={0.8}
-                onPress={() => router.push(`/ordenes/${order.id}` as any)}
-              >
+              <TouchableOpacity key={order.id} style={styles.orderCard} activeOpacity={0.8}>
                 {/* Top row */}
                 <View style={styles.orderTop}>
                   <View style={styles.orderIdRow}>
                     <Text style={styles.orderId}>{order.orderId}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-                      <Text style={[styles.statusText, { color: cfg.text }]}>{order.status}</Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: cfg.bg, borderColor: cfg.border },
+                      ]}
+                    >
+                      <Text style={[styles.statusText, { color: cfg.text }]}>
+                        {order.status}
+                      </Text>
                     </View>
                   </View>
                   <ChevronRight size={18} color={COLORS.darkBrown + '60'} />
                 </View>
 
+                {/* Divider */}
                 <View style={styles.cardDivider} />
 
                 {/* Details */}
@@ -112,7 +178,7 @@ export default function OrdersScreen() {
                   <Text style={styles.orderTotal}>{order.total}</Text>
                 </View>
 
-                {/* Actions */}
+                {/* Actions for active orders */}
                 {(order.status === 'En camino' || order.status === 'Procesando') && (
                   <View style={styles.orderActions}>
                     <TouchableOpacity style={styles.trackBtn}>
@@ -135,19 +201,32 @@ export default function OrdersScreen() {
           })
         )}
       </ScrollView>
-    </View>
+    </>
   );
+
+  if (useSafeArea) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {Content}
+      </SafeAreaView>
+    );
+  }
+
+  return <View style={styles.safeArea}>{Content}</View>;
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.darkBrown },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: COLORS.darkBrown },
   summaryStrip: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
@@ -187,7 +266,12 @@ const styles = StyleSheet.create({
   },
   orderIdRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   orderId: { fontSize: 16, fontWeight: '700', color: COLORS.darkBrown },
-  statusBadge: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
+  statusBadge: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
   statusText: { fontSize: 12, fontWeight: '600' },
   cardDivider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 14 },
   orderDetails: {
@@ -198,29 +282,47 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   emojiCircle: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: COLORS.lightBeige,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   orderEmoji: { fontSize: 22 },
   orderMeta: { flex: 1, gap: 2 },
   orderDate: { fontSize: 13, color: COLORS.muted },
   orderItems: { fontSize: 12, color: COLORS.darkBrown + '80' },
   orderTotal: { fontSize: 18, fontWeight: '700', color: COLORS.accent },
-  orderActions: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingBottom: 12 },
+  orderActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+  },
   trackBtn: {
-    flex: 1, backgroundColor: COLORS.accent,
-    paddingVertical: 9, borderRadius: 8, alignItems: 'center',
+    flex: 1,
+    backgroundColor: COLORS.accent,
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   trackBtnText: { color: COLORS.darkBrown, fontSize: 13, fontWeight: '600' },
   reorderBtn: {
-    flex: 1, backgroundColor: COLORS.accent,
-    paddingVertical: 9, borderRadius: 8, alignItems: 'center',
+    flex: 1,
+    backgroundColor: COLORS.accent,
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   reorderBtnText: { color: COLORS.darkBrown, fontSize: 13, fontWeight: '600' },
   reviewBtn: {
-    flex: 1, borderWidth: 1, borderColor: COLORS.border,
-    paddingVertical: 9, borderRadius: 8, alignItems: 'center',
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   reviewBtnText: { color: COLORS.darkBrown, fontSize: 13, fontWeight: '500' },
 });

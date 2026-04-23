@@ -13,15 +13,22 @@ import { ArrowLeft, Heart, ShoppingBag, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
 import { products } from '@/src/data/products';
+import { useAppStore } from '@/src/store/useAppStore';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 44) / 2;
 
-// Pre-loaded favorites
 const initialFavorites = ['1', '2', '5', '7', '10'];
 
-export default function FavoritesScreen() {
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  hideHeader?: boolean;
+}
+
+export default function FavoritosPage({ showBackButton = false, onBack, hideHeader = false }: Props) {
   const router = useRouter();
+  const addToCart = useAppStore((s) => s.addToCart);
   const [favorites, setFavorites] = useState<string[]>(initialFavorites);
 
   const favoriteProducts = products.filter((p) => favorites.includes(p.id));
@@ -44,22 +51,36 @@ export default function FavoritesScreen() {
     ]);
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={styles.safeArea}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mis Favoritos</Text>
-        {favorites.length > 0 ? (
-          <TouchableOpacity onPress={clearAll}>
-            <Trash2 size={20} color={COLORS.red} />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 24 }} />
-        )}
-      </View>
+      {!hideHeader && (
+        <View style={styles.header}>
+          {showBackButton ? (
+            <TouchableOpacity onPress={handleBack}>
+              <ArrowLeft size={24} color={COLORS.darkBrown} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
+          <Text style={styles.headerTitle}>Mis Favoritos</Text>
+          {favorites.length > 0 ? (
+            <TouchableOpacity onPress={clearAll}>
+              <Trash2 size={20} color={COLORS.red} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
+        </View>
+      )}
 
       {/* Count */}
       {favorites.length > 0 && (
@@ -70,7 +91,6 @@ export default function FavoritesScreen() {
       )}
 
       {favoriteProducts.length === 0 ? (
-        /* Empty state */
         <View style={styles.emptyState}>
           <View style={styles.emptyHeart}>
             <Heart size={40} color={COLORS.border} />
@@ -90,7 +110,12 @@ export default function FavoritesScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.grid}>
           {favoriteProducts.map((product) => (
-            <View key={product.id} style={styles.card}>
+            <TouchableOpacity
+              key={product.id}
+              style={styles.card}
+              onPress={() => router.push(`/productos/${product.id}` as any)}
+              activeOpacity={0.88}
+            >
               {/* Image */}
               <View style={styles.imageBox}>
                 <Image source={product.image} style={styles.productImg} resizeMode="cover" />
@@ -126,11 +151,17 @@ export default function FavoritesScreen() {
               </View>
 
               {/* Add to cart */}
-              <TouchableOpacity style={styles.addBtn}>
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  addToCart();
+                }}
+              >
                 <ShoppingBag size={14} color={COLORS.darkBrown} />
                 <Text style={styles.addBtnText}>Agregar</Text>
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
@@ -225,7 +256,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   discountText: { color: COLORS.darkBrown, fontSize: 10, fontWeight: '700' },
-  cardInfo: { padding: 12, gap: 3 },
+  cardInfo: { flex: 1, padding: 12, gap: 3 },
   cardCategory: { fontSize: 10, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: 0.4 },
   cardName: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
   cardDesc: { fontSize: 11, color: COLORS.muted },

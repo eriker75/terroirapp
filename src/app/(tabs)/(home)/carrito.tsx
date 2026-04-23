@@ -12,6 +12,7 @@ import {
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/src/constants/colors';
+import HeaderLayout from '@/src/components/layouts/HeaderLayout';
 
 const PROMO_CODES: Record<string, number> = {
   WELCOME: 5.0,
@@ -34,7 +35,7 @@ const initialCart: CartItem[] = [
     name: 'Espresso Intenso Colombiano',
     price: 5.75,
     quantity: 2,
-    image: require('../../../assets/images/products/espresso-terroir.jpg'),
+    image: require('@/assets/images/products/espresso-terroir.jpg'),
     description: 'Tueste oscuro',
   },
   {
@@ -42,7 +43,7 @@ const initialCart: CartItem[] = [
     name: 'Cappuccino Artesanal',
     price: 6.50,
     quantity: 1,
-    image: require('../../../assets/images/cappuccino.jpg'),
+    image: require('@/assets/images/cappuccino.jpg'),
     description: 'Tradición italiana',
   },
   {
@@ -50,7 +51,7 @@ const initialCart: CartItem[] = [
     name: 'Cold Brew Premium',
     price: 4.99,
     quantity: 1,
-    image: require('../../../assets/images/cold-brew.jpg'),
+    image: require('@/assets/images/cold-brew.jpg'),
     description: 'Refrescante',
   },
 ];
@@ -91,152 +92,151 @@ export default function CartScreen() {
   const total = subtotal + discount + tax + shipping;
 
   return (
-    <View style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Carrito</Text>
-        {items.length > 0 && (
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{items.reduce((s, i) => s + i.quantity, 0)}</Text>
-          </View>
-        )}
-      </View>
-
-      {items.length === 0 ? (
-        /* Empty State */
-        <View style={styles.emptyState}>
-          <ShoppingBag size={64} color={COLORS.border} />
-          <Text style={styles.emptyTitle}>Tu carrito está vacío</Text>
-          <Text style={styles.emptySubtitle}>Agrega algunos cafés para continuar</Text>
-          <TouchableOpacity
-            style={styles.emptyBtn}
-            onPress={() => router.push('/(tabs)/productos')}
-          >
-            <Text style={styles.emptyBtnText}>Explorar productos</Text>
-          </TouchableOpacity>
+    <HeaderLayout>
+      <View style={styles.safeArea}>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Mi Carrito</Text>
+          {items.length > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{items.reduce((s, i) => s + i.quantity, 0)}</Text>
+            </View>
+          )}
         </View>
-      ) : (
-        <>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {items.map((item) => (
-              <View key={item.id} style={styles.itemCard}>
-                {/* Image */}
-                <View style={styles.itemImage}>
-                  <Image source={item.image} style={styles.itemImg} resizeMode="cover" />
-                </View>
 
-                {/* Info */}
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                  <Text style={styles.itemDescription}>{item.description}</Text>
-                  <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
-                </View>
-
-                {/* Actions */}
-                <View style={styles.itemActions}>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => removeItem(item.id)}>
-                    <Trash2 size={16} color={COLORS.red} />
-                  </TouchableOpacity>
-                  <View style={styles.qtyControl}>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => updateQty(item.id, item.quantity - 1)}
-                    >
-                      <Minus size={12} color={COLORS.darkBrown} />
-                    </TouchableOpacity>
-                    <Text style={styles.qtyText}>{item.quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => updateQty(item.id, item.quantity + 1)}
-                    >
-                      <Plus size={12} color={COLORS.darkBrown} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ))}
-
-            {/* Promo code */}
-            <View style={styles.promoSection}>
-              <Text style={styles.promoLabel}>Código promocional</Text>
-              <View style={styles.promoRow}>
-                <TextInput
-                  style={styles.promoInput}
-                  value={promoInput}
-                  onChangeText={(t) => { setPromoInput(t); setPromoError(false); }}
-                  placeholder="Ej. WELCOME"
-                  placeholderTextColor={COLORS.muted}
-                  autoCapitalize="characters"
-                  returnKeyType="done"
-                  onSubmitEditing={applyPromo}
-                />
-                <TouchableOpacity style={styles.promoApplyBtn} onPress={applyPromo}>
-                  <Text style={styles.promoApplyText}>Aplicar</Text>
-                </TouchableOpacity>
-              </View>
-              {appliedCode && (
-                <View style={styles.promoApplied}>
-                  <Text style={styles.promoAppliedText}>
-                    ✓ Descuento {appliedCode} aplicado (-${PROMO_CODES[appliedCode].toFixed(2)})
-                  </Text>
-                </View>
-              )}
-              {promoError && (
-                <View style={styles.promoError}>
-                  <Text style={styles.promoErrorText}>Código inválido o no encontrado</Text>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-
-          {/* Summary Panel */}
-          <View style={styles.summary}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
-            </View>
-            {appliedCode && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Descuento ({appliedCode})</Text>
-                <Text style={[styles.summaryValue, { color: COLORS.green }]}>-${discountAmount.toFixed(2)}</Text>
-              </View>
-            )}
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Impuesto (10%)</Text>
-              <Text style={styles.summaryValue}>+${tax.toFixed(2)}</Text>
-            </View>
-            <View style={[styles.summaryRow, styles.summaryRowBorder]}>
-              <Text style={styles.summaryLabel}>Envío</Text>
-              <Text style={styles.summaryValue}>+${shipping.toFixed(2)}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
-            </View>
+        {items.length === 0 ? (
+          /* Empty State */
+          <View style={styles.emptyState}>
+            <ShoppingBag size={64} color={COLORS.border} />
+            <Text style={styles.emptyTitle}>Tu carrito está vacío</Text>
+            <Text style={styles.emptySubtitle}>Agrega algunos cafés para continuar</Text>
             <TouchableOpacity
-              style={styles.checkoutBtn}
-              onPress={() => router.push('/checkout' as any)}
-              activeOpacity={0.85}
+              style={styles.emptyBtn}
+              onPress={() => router.push('/(tabs)/productos')}
             >
-              <Text style={styles.checkoutBtnText}>Proceder a Pago</Text>
+              <Text style={styles.emptyBtnText}>Explorar productos</Text>
             </TouchableOpacity>
           </View>
-        </>
-      )}
-    </View>
+        ) : (
+          <>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+              {items.map((item) => (
+                <View key={item.id} style={styles.itemCard}>
+                  {/* Image */}
+                  <View style={styles.itemImage}>
+                    <Image source={item.image} style={styles.itemImg} resizeMode="cover" />
+                  </View>
+
+                  {/* Info */}
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.itemDescription}>{item.description}</Text>
+                    <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+                  </View>
+
+                  {/* Actions */}
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity style={styles.deleteBtn} onPress={() => removeItem(item.id)}>
+                      <Trash2 size={16} color={COLORS.red} />
+                    </TouchableOpacity>
+                    <View style={styles.qtyControl}>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => updateQty(item.id, item.quantity - 1)}
+                      >
+                        <Minus size={12} color={COLORS.darkBrown} />
+                      </TouchableOpacity>
+                      <Text style={styles.qtyText}>{item.quantity}</Text>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => updateQty(item.id, item.quantity + 1)}
+                      >
+                        <Plus size={12} color={COLORS.darkBrown} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))}
+
+              {/* Promo code */}
+              <View style={styles.promoSection}>
+                <Text style={styles.promoLabel}>Código promocional</Text>
+                <View style={styles.promoRow}>
+                  <TextInput
+                    style={styles.promoInput}
+                    value={promoInput}
+                    onChangeText={(t) => { setPromoInput(t); setPromoError(false); }}
+                    placeholder="Ej. WELCOME"
+                    placeholderTextColor={COLORS.muted}
+                    autoCapitalize="characters"
+                    returnKeyType="done"
+                    onSubmitEditing={applyPromo}
+                  />
+                  <TouchableOpacity style={styles.promoApplyBtn} onPress={applyPromo}>
+                    <Text style={styles.promoApplyText}>Aplicar</Text>
+                  </TouchableOpacity>
+                </View>
+                {appliedCode && (
+                  <View style={styles.promoApplied}>
+                    <Text style={styles.promoAppliedText}>
+                      ✓ Descuento {appliedCode} aplicado (-${PROMO_CODES[appliedCode].toFixed(2)})
+                    </Text>
+                  </View>
+                )}
+                {promoError && (
+                  <View style={styles.promoError}>
+                    <Text style={styles.promoErrorText}>Código inválido o no encontrado</Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Summary Panel */}
+            <View style={styles.summary}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Subtotal</Text>
+                <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+              </View>
+              {appliedCode && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Descuento ({appliedCode})</Text>
+                  <Text style={[styles.summaryValue, { color: COLORS.green }]}>-${discountAmount.toFixed(2)}</Text>
+                </View>
+              )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Impuesto (10%)</Text>
+                <Text style={styles.summaryValue}>+${tax.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.summaryRow, styles.summaryRowBorder]}>
+                <Text style={styles.summaryLabel}>Envío</Text>
+                <Text style={styles.summaryValue}>+${shipping.toFixed(2)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.checkoutBtn}
+                onPress={() => router.push('/checkout' as any)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.checkoutBtnText}>Proceder a Pago</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </View>
+    </HeaderLayout>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', color: COLORS.darkBrown },
   countBadge: {
@@ -332,7 +332,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  promoPlaceholder: { fontSize: 13, color: COLORS.muted },
   promoApplyBtn: {
     backgroundColor: COLORS.darkBrown,
     paddingHorizontal: 16,

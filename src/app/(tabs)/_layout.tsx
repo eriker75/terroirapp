@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Home, Heart, Grid3X3, ShoppingBag, User } from 'lucide-react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/src/constants/colors';
 import { useAppStore } from '@/src/store/useAppStore';
 
@@ -10,8 +10,8 @@ export default function TabLayout() {
   const wishlistCount = useAppStore((s) => s.wishlistCount);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightBeige }} edges={['top']}>
     <Tabs
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -41,14 +41,14 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="(home)/index"
         options={{
           title: 'Inicio',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
-        name="deseos"
+        name="(home)/deseos"
         options={{
           title: 'Deseos',
           tabBarIcon: ({ color, size }) => <Heart color={color} size={size - 2} />,
@@ -56,14 +56,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="productos"
+        name="(home)/productos"
         options={{
           title: 'Productos',
           tabBarIcon: ({ color, size }) => <Grid3X3 color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen
-        name="carrito"
+        name="(home)/carrito"
         options={{
           title: 'Carrito',
           tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size - 2} />,
@@ -71,26 +71,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="(dashboard)/perfil"
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} />,
         }}
       />
 
-      {/* Hidden screens within (tabs) — tab bar remains visible */}
-      <Tabs.Screen name="productos/[id]" options={{ href: null }} />
-      <Tabs.Screen name="ordenes" options={{ href: null }} />
-      <Tabs.Screen name="ordenes/[id]" options={{ href: null }} />
+      {/* Sub-screens - hidden from tab bar */}
+      <Tabs.Screen name="(home)/productos/[id]" options={{ href: null }} />
       <Tabs.Screen name="notificaciones" options={{ href: null }} />
-      <Tabs.Screen name="perfil/editar" options={{ href: null }} />
-      <Tabs.Screen name="perfil/favoritos" options={{ href: null }} />
-      <Tabs.Screen name="perfil/direcciones" options={{ href: null }} />
-      <Tabs.Screen name="perfil/tarjetas" options={{ href: null }} />
-      <Tabs.Screen name="perfil/settings" options={{ href: null }} />
-      <Tabs.Screen name="perfil/privacidad" options={{ href: null }} />
       <Tabs.Screen name="checkout" options={{ href: null }} />
     </Tabs>
-    </SafeAreaView>
   );
 }
