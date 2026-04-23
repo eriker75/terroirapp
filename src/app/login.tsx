@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react-native';
@@ -59,7 +60,11 @@ export default function LoginScreen() {
           <View style={styles.loginCard}>
             {/* Dark Header part of the card */}
             <View style={styles.cardHeader}>
-              <Text style={styles.brandName}>Terroir</Text>
+              <Image
+                source={require('@/assets/images/logo/terroir-cream-coffe-text.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+              />
               <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
             </View>
 
@@ -186,10 +191,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  brandName: {
-    color: COLORS.white,
-    fontSize: 32,
-    fontWeight: '700',
+  brandLogo: {
+    width: 180,
+    height: 56,
     marginBottom: 4,
   },
   brandSubtitle: {
