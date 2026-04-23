@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "terriorapp",
+    "name": "terroirapp",
     "slug": "terroir",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/android/play_store_512.png",
-    "scheme": "terrior",
+    "scheme": "terroir",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/ios/icon.png",
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android/ic_launcher_monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.terrior.somosnodo"
+      "package": "com.terroir.somosnodo"
     },
     "web": {
       "output": "static",
