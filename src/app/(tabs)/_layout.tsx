@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Home, Heart, Grid3X3, ShoppingBag, User } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/src/constants/colors';
 import { useAppStore } from '@/src/store/useAppStore';
 
@@ -10,6 +10,7 @@ export default function TabLayout() {
   const wishlistCount = useAppStore((s) => s.wishlistCount);
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightBeige }} edges={['top']}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -90,5 +91,6 @@ export default function TabLayout() {
       <Tabs.Screen name="perfil/privacidad" options={{ href: null }} />
       <Tabs.Screen name="checkout" options={{ href: null }} />
     </Tabs>
+    </SafeAreaView>
   );
 }
