@@ -2,7 +2,7 @@ module.exports = function (api) {
   api.cache(true);
 
   return {
-    presets: [['babel-preset-expo'], 'nativewind/babel'],
+    presets: [['babel-preset-expo', { reanimated: false }], 'nativewind/babel'],
 
     plugins: [
       [
@@ -16,7 +16,6 @@ module.exports = function (api) {
           },
         },
       ],
-      'react-native-worklets/plugin',
     ],
   };
 };
