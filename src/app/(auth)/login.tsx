@@ -11,31 +11,26 @@ import {
 } from 'react-native';
 import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
+import { useLoginMutation } from '@/services';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types/api.types';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleLogin = async () => {
-    setError('');
-    if (!email || !password) {
-      setError('Por favor completa todos los campos');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.replace('/(tabs)');
-    } catch {
-      setError('Error al iniciar sesión. Inténtalo de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
+  const { mutate: login, isPending, isError, error } = useLoginMutation();
+
+  const errorMessage = isError
+    ? ((error as AxiosError<ApiError>)?.response?.data?.message ?? 'Error al iniciar sesión')
+    : '';
+
+  const handleLogin = () => {
+    if (!email || !password) return;
+    login({ email, password });
   };
 
   return (
@@ -57,19 +52,23 @@ export default function LoginScreen() {
               style={styles.brandLogo}
               resizeMode="contain"
             />
-            <Text style={styles.brandSubtitle}>Inicia sesión en tu cuenta</Text>
+            <Text className="text-subtitulo text-center" style={{ color: COLORS.white + 'CC' }}>
+              Inicia sesión en tu cuenta
+            </Text>
           </View>
 
           <View style={styles.cardBody}>
-            {error !== '' && (
+            {isError && (
               <View style={styles.errorBox}>
                 <AlertCircle size={18} color={COLORS.red} />
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
             )}
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Correo electrónico</Text>
+              <Text className="text-cta" style={{ color: COLORS.darkBrown, marginBottom: 4 }}>
+                Correo electrónico
+              </Text>
               <TextInput
                 style={styles.input}
                 placeholder="tu@email.com"
@@ -83,7 +82,9 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Contraseña</Text>
+              <Text className="text-cta" style={{ color: COLORS.darkBrown, marginBottom: 4 }}>
+                Contraseña
+              </Text>
               <View style={styles.passwordRow}>
                 <TextInput
                   style={styles.passwordInput}
@@ -111,26 +112,28 @@ export default function LoginScreen() {
               style={styles.forgotRow}
               onPress={() => router.push('/forgot-password')}
             >
-              <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+              <Text className="text-cta" style={{ color: COLORS.accent }}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              style={[styles.submitBtn, isPending && styles.submitBtnDisabled]}
               onPress={handleLogin}
-              disabled={isLoading}
+              disabled={isPending}
             >
-              {isLoading ? (
+              {isPending ? (
                 <ActivityIndicator color={COLORS.darkBrown} />
               ) : (
-                <Text style={styles.submitBtnText}>Iniciar sesión</Text>
+                <Text className="text-cta text-center" style={{ color: COLORS.darkBrown }}>
+                  Iniciar sesión
+                </Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.divider} />
             <View style={styles.registerRow}>
-              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+              <Text className="text-cta" style={{ color: COLORS.darkBrown + '99' }}>¿No tienes cuenta? </Text>
               <TouchableOpacity onPress={() => router.push('/registro')}>
-                <Text style={styles.registerLink}>Regístrate aquí</Text>
+                <Text className="text-cta" style={{ color: COLORS.accent }}>Regístrate aquí</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -175,20 +178,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  brandLogo: {
-    width: 180,
-    height: 56,
-    marginBottom: 4,
-  },
+  brandLogo: { width: 180, height: 56, marginBottom: 4 },
   brandSubtitle: {
+    fontFamily: 'BodoniModa-SemiBold',
+    fontSize: 17.5,
+    lineHeight: 22,
+    letterSpacing: -0.35,
     color: COLORS.white + 'CC',
-    fontSize: 16,
     textAlign: 'center',
   },
-  cardBody: {
-    padding: 20,
-    gap: 16,
-  },
+  cardBody: { padding: 20, gap: 16 },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -199,17 +198,30 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 14,
   },
-  errorText: { flex: 1, fontSize: 13, color: '#991B1B' },
+  errorText: {
+    fontFamily: 'JosefinSans-Light',
+    flex: 1,
+    fontSize: 13,
+    color: '#991B1B',
+  },
   fieldGroup: { gap: 6 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.darkBrown },
+  label: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
+    color: COLORS.darkBrown,
+  },
   input: {
+    fontFamily: 'JosefinSans-Light',
     backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 14,
+    lineHeight: 22,
     color: COLORS.darkBrown,
   },
   passwordRow: {
@@ -221,15 +233,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   passwordInput: {
+    fontFamily: 'JosefinSans-Light',
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 14,
+    lineHeight: 22,
     color: COLORS.darkBrown,
   },
   eyeBtn: { paddingHorizontal: 14 },
   forgotRow: { alignItems: 'flex-end', marginTop: -6 },
-  forgotText: { fontSize: 13, color: COLORS.accent, fontWeight: '500' },
+  forgotText: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
+    color: COLORS.accent,
+  },
   submitBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
@@ -238,13 +258,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    marginVertical: 4,
+  submitBtnText: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
+    color: COLORS.darkBrown,
   },
+  divider: { borderTopWidth: 1, borderTopColor: COLORS.border, marginVertical: 4 },
   registerRow: { flexDirection: 'row', justifyContent: 'center' },
-  registerText: { fontSize: 14, color: COLORS.darkBrown + '99' },
-  registerLink: { fontSize: 14, color: COLORS.accent, fontWeight: '600' },
+  registerText: {
+    fontFamily: 'JosefinSans-Light',
+    fontSize: 14,
+    lineHeight: 22,
+    color: COLORS.darkBrown + '99',
+  },
+  registerLink: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
+    color: COLORS.accent,
+  },
 });

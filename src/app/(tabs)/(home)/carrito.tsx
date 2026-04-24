@@ -6,90 +6,87 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ImageSourcePropType,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
-import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react-native';
+import { Trash2, Minus, Plus, ShoppingBag, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
-import HeaderLayout from '@/src/components/layouts/HeaderLayout';
+import { COLORS } from '@/constants/colors';
+import HeaderLayout from '@/components/layouts/HeaderLayout';
+import {
+  useCartQuery,
+  useUpdateCartItemMutation,
+  useRemoveCartItemMutation,
+  useApplyCouponMutation,
+  useRemoveCouponMutation,
+} from '@/services';
+import type { Coupon } from '@/types';
 
-const PROMO_CODES: Record<string, number> = {
-  WELCOME: 5.0,
-  TERROIR10: 3.0,
-  CAFE20: 4.0,
-};
+const PLACEHOLDER = require('@/assets/images/coffee-product-5.jpg');
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: ImageSourcePropType;
-  description: string;
+function calcDiscount(coupon: Coupon, subtotal: number): number {
+  if (coupon.discountType === 'PERCENTAGE') return subtotal * (coupon.amount / 100);
+  return coupon.amount;
 }
-
-const initialCart: CartItem[] = [
-  {
-    id: '1',
-    name: 'Espresso Intenso Colombiano',
-    price: 5.75,
-    quantity: 2,
-    image: require('@/assets/images/products/espresso-terroir.jpg'),
-    description: 'Tueste oscuro',
-  },
-  {
-    id: '2',
-    name: 'Cappuccino Artesanal',
-    price: 6.50,
-    quantity: 1,
-    image: require('@/assets/images/cappuccino.jpg'),
-    description: 'Tradición italiana',
-  },
-  {
-    id: '3',
-    name: 'Cold Brew Premium',
-    price: 4.99,
-    quantity: 1,
-    image: require('@/assets/images/cold-brew.jpg'),
-    description: 'Refrescante',
-  },
-];
 
 export default function CartScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<CartItem[]>(initialCart);
   const [promoInput, setPromoInput] = useState('');
-  const [appliedCode, setAppliedCode] = useState<string | null>(null);
-  const [promoError, setPromoError] = useState(false);
 
-  const updateQty = (id: string, qty: number) => {
+  const { data: cart, isLoading, isError } = useCartQuery();
+  const updateItemMutation = useUpdateCartItemMutation();
+  const removeItemMutation = useRemoveCartItemMutation();
+  const applyMutation = useApplyCouponMutation();
+  const removeCouponMutation = useRemoveCouponMutation();
+
+  const items = cart?.items ?? [];
+  const appliedCoupon = cart?.coupon;
+
+  const updateQty = (productId: string, qty: number) => {
     if (qty <= 0) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      removeItemMutation.mutate(productId);
     } else {
-      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+      updateItemMutation.mutate({ productId, dto: { quantity: qty } });
     }
   };
 
-  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = (productId: string) => {
+    removeItemMutation.mutate(productId);
+  };
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase();
-    if (PROMO_CODES[code]) {
-      setAppliedCode(code);
-      setPromoError(false);
-    } else {
-      setAppliedCode(null);
-      setPromoError(true);
-    }
+    if (!code) return;
+    applyMutation.mutate({ couponCode: code }, {
+      onSuccess: () => setPromoInput(''),
+    });
   };
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discountAmount = appliedCode ? PROMO_CODES[appliedCode] : 0;
-  const discount = -discountAmount;
+  const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const discountAmount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
   const tax = items.length > 0 ? subtotal * 0.1 : 0;
   const shipping = items.length > 0 ? 3.0 : 0;
-  const total = subtotal + discount + tax + shipping;
+  const total = subtotal - discountAmount + tax + shipping;
+
+  if (isLoading) {
+    return (
+      <HeaderLayout>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={COLORS.accent} />
+        </View>
+      </HeaderLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <HeaderLayout>
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>No se pudo cargar el carrito</Text>
+        </View>
+      </HeaderLayout>
+    );
+  }
 
   return (
     <HeaderLayout>
@@ -104,7 +101,6 @@ export default function CartScreen() {
         </View>
 
         {items.length === 0 ? (
-          /* Empty State */
           <View style={styles.emptyState}>
             <ShoppingBag size={64} color={COLORS.border} />
             <Text style={styles.emptyTitle}>Tu carrito está vacío</Text>
@@ -121,34 +117,38 @@ export default function CartScreen() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
               {items.map((item) => (
                 <View key={item.id} style={styles.itemCard}>
-                  {/* Image */}
                   <View style={styles.itemImage}>
-                    <Image source={item.image} style={styles.itemImg} resizeMode="cover" />
+                    <Image
+                      source={item.product.mainImage ? { uri: item.product.mainImage } : PLACEHOLDER}
+                      style={styles.itemImg}
+                      resizeMode="cover"
+                    />
                   </View>
 
-                  {/* Info */}
                   <View style={styles.itemInfo}>
-                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                    <Text style={styles.itemDescription}>{item.description}</Text>
-                    <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+                    <Text style={styles.itemName} numberOfLines={2}>{item.product.name}</Text>
+                    <Text style={styles.itemDescription} numberOfLines={1}>{item.product.description}</Text>
+                    <Text style={styles.itemPrice}>${(item.product.price * item.quantity).toFixed(2)}</Text>
                   </View>
 
-                  {/* Actions */}
                   <View style={styles.itemActions}>
-                    <TouchableOpacity style={styles.deleteBtn} onPress={() => removeItem(item.id)}>
+                    <TouchableOpacity
+                      style={styles.deleteBtn}
+                      onPress={() => removeItem(item.productId)}
+                    >
                       <Trash2 size={16} color={COLORS.red} />
                     </TouchableOpacity>
                     <View style={styles.qtyControl}>
                       <TouchableOpacity
                         style={styles.qtyBtn}
-                        onPress={() => updateQty(item.id, item.quantity - 1)}
+                        onPress={() => updateQty(item.productId, item.quantity - 1)}
                       >
                         <Minus size={12} color={COLORS.darkBrown} />
                       </TouchableOpacity>
                       <Text style={styles.qtyText}>{item.quantity}</Text>
                       <TouchableOpacity
                         style={styles.qtyBtn}
-                        onPress={() => updateQty(item.id, item.quantity + 1)}
+                        onPress={() => updateQty(item.productId, item.quantity + 1)}
                       >
                         <Plus size={12} color={COLORS.darkBrown} />
                       </TouchableOpacity>
@@ -160,29 +160,47 @@ export default function CartScreen() {
               {/* Promo code */}
               <View style={styles.promoSection}>
                 <Text style={styles.promoLabel}>Código promocional</Text>
-                <View style={styles.promoRow}>
-                  <TextInput
-                    style={styles.promoInput}
-                    value={promoInput}
-                    onChangeText={(t) => { setPromoInput(t); setPromoError(false); }}
-                    placeholder="Ej. WELCOME"
-                    placeholderTextColor={COLORS.muted}
-                    autoCapitalize="characters"
-                    returnKeyType="done"
-                    onSubmitEditing={applyPromo}
-                  />
-                  <TouchableOpacity style={styles.promoApplyBtn} onPress={applyPromo}>
-                    <Text style={styles.promoApplyText}>Aplicar</Text>
-                  </TouchableOpacity>
-                </View>
-                {appliedCode && (
+                {appliedCoupon ? (
                   <View style={styles.promoApplied}>
                     <Text style={styles.promoAppliedText}>
-                      ✓ Descuento {appliedCode} aplicado (-${PROMO_CODES[appliedCode].toFixed(2)})
+                      ✓ Cupón {appliedCoupon.code} aplicado (
+                      {appliedCoupon.discountType === 'PERCENTAGE'
+                        ? `-${appliedCoupon.amount}%`
+                        : `-$${appliedCoupon.amount.toFixed(2)}`}
+                      )
                     </Text>
+                    <TouchableOpacity
+                      onPress={() => removeCouponMutation.mutate()}
+                      disabled={removeCouponMutation.isPending}
+                    >
+                      <X size={16} color={COLORS.green} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.promoRow}>
+                    <TextInput
+                      style={styles.promoInput}
+                      value={promoInput}
+                      onChangeText={(t) => {
+                        setPromoInput(t);
+                        if (applyMutation.isError) applyMutation.reset();
+                      }}
+                      placeholder="Ej. WELCOME"
+                      placeholderTextColor={COLORS.muted}
+                      autoCapitalize="characters"
+                      returnKeyType="done"
+                      onSubmitEditing={applyPromo}
+                    />
+                    <TouchableOpacity
+                      style={[styles.promoApplyBtn, applyMutation.isPending && { opacity: 0.6 }]}
+                      onPress={applyPromo}
+                      disabled={applyMutation.isPending}
+                    >
+                      <Text style={styles.promoApplyText}>Aplicar</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
-                {promoError && (
+                {applyMutation.isError && !appliedCoupon && (
                   <View style={styles.promoError}>
                     <Text style={styles.promoErrorText}>Código inválido o no encontrado</Text>
                   </View>
@@ -196,10 +214,12 @@ export default function CartScreen() {
                 <Text style={styles.summaryLabel}>Subtotal</Text>
                 <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
               </View>
-              {appliedCode && (
+              {appliedCoupon && (
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Descuento ({appliedCode})</Text>
-                  <Text style={[styles.summaryValue, { color: COLORS.green }]}>-${discountAmount.toFixed(2)}</Text>
+                  <Text style={styles.summaryLabel}>Descuento ({appliedCoupon.code})</Text>
+                  <Text style={[styles.summaryValue, { color: COLORS.green }]}>
+                    -${discountAmount.toFixed(2)}
+                  </Text>
                 </View>
               )}
               <View style={styles.summaryRow}>
@@ -231,6 +251,8 @@ export default function CartScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  errorText: { fontSize: 15, color: COLORS.muted },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,12 +362,15 @@ const styles = StyleSheet.create({
   },
   promoApplyText: { color: COLORS.white, fontSize: 13, fontWeight: '600' },
   promoApplied: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#F0FDF4',
     borderRadius: 6,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
-  promoAppliedText: { color: COLORS.green, fontSize: 12, fontWeight: '500' },
+  promoAppliedText: { color: COLORS.green, fontSize: 12, fontWeight: '500', flex: 1 },
   promoError: {
     backgroundColor: COLORS.redLight,
     borderRadius: 6,

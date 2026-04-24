@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* === Sistema de Diseño Terroir === */
+  .text-titulo {
+    /* Bodoni Moda ExtraBold — 35px / 30px leading — Tracking -20 */
+    @apply font-bodoni-extrabold text-[35px] leading-[30px] tracking-[-0.05em];
+  }
+  .text-subtitulo {
+    /* Bodoni Moda SemiBold — 17.5px / 22px leading — Tracking -20 */
+    @apply font-bodoni-semibold text-[17.5px] leading-[22px] tracking-[-0.05em];
+  }
+  .text-apoyo {
+    /* Josefin Sans Light — 9px / 10px leading — Tracking -20 */
+    @apply font-josefin-light text-[9px] leading-[10px] tracking-[-0.05em];
+  }
+  .text-cta {
+    /* Josefin Sans SemiBold — 15px / 18px leading — Tracking -20 */
+    @apply font-josefin-semibold text-[15px] leading-[18px] tracking-[-0.05em];
+  }
+  .text-body {
+    /* Josefin Sans Light — 14px / 22px leading — uso general */
+    @apply font-josefin-light text-[14px] leading-[22px];
+  }
+}

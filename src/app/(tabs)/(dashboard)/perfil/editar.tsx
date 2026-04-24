@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, Mail, Phone, Calendar, Camera, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
 
 export default function EditProfileScreen() {
   const router = useRouter();

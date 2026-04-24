@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
 import { Home, Heart, Grid3X3, ShoppingBag, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS } from '@/src/constants/colors';
-import { useAppStore } from '@/src/store/useAppStore';
+import { COLORS } from '@/constants/colors';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();

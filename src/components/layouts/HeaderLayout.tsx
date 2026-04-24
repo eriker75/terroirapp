@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNotificationsQuery } from '@/services';
 
 interface Props {
   children: React.ReactNode;
@@ -11,6 +12,8 @@ interface Props {
 
 export default function HeaderLayout({ children }: Props) {
   const router = useRouter();
+  const { data: notifications } = useNotificationsQuery();
+  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -20,14 +23,16 @@ export default function HeaderLayout({ children }: Props) {
           style={styles.headerLogo}
           resizeMode="contain"
         />
-        <TouchableOpacity 
-          style={styles.bellBtn} 
+        <TouchableOpacity
+          style={styles.bellBtn}
           onPress={() => router.push('/notificaciones')}
         >
           <Bell size={22} color={COLORS.darkBrown} />
-          <View style={styles.bellBadge}>
-            <Text style={styles.bellBadgeText}>2</Text>
-          </View>
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
       <View style={styles.content}>

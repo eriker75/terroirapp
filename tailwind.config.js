@@ -182,6 +182,22 @@ module.exports = {
         },
       },
       fontFamily: {
+        // Bodoni Moda
+        'bodoni':              ['BodoniModa-Regular'],
+        'bodoni-italic':       ['BodoniModa-Italic'],
+        'bodoni-medium':       ['BodoniModa-Medium'],
+        'bodoni-semibold':     ['BodoniModa-SemiBold'],
+        'bodoni-bold':         ['BodoniModa-Bold'],
+        'bodoni-extrabold':    ['BodoniModa-ExtraBold'],
+        'bodoni-black':        ['BodoniModa-Black'],
+        // Josefin Sans
+        'josefin-thin':        ['JosefinSans-Thin'],
+        'josefin-extralight':  ['JosefinSans-ExtraLight'],
+        'josefin-light':       ['JosefinSans-Light'],
+        'josefin':             ['JosefinSans-Regular'],
+        'josefin-medium':      ['JosefinSans-Medium'],
+        'josefin-semibold':    ['JosefinSans-SemiBold'],
+        'josefin-bold':        ['JosefinSans-Bold'],
         heading: undefined,
         body: undefined,
         mono: undefined,

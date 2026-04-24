@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -82,8 +82,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   welcomeTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontFamily: 'BodoniModa-ExtraBold',
+    fontSize: 35,
+    lineHeight: 30,
+    letterSpacing: -0.7,       // ~-20 tracking
     color: COLORS.darkBrown,
     textAlign: 'center',
     marginBottom: 4,
@@ -94,16 +96,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   welcomeText: {
-    fontSize: 15,
+    fontFamily: 'JosefinSans-Light',
+    fontSize: 14,
+    lineHeight: 22,
     color: COLORS.muted,
     textAlign: 'center',
     marginBottom: 32,
-    lineHeight: 22,
   },
   primaryButton: {
     backgroundColor: COLORS.brown,
     paddingVertical: 16,
-    borderRadius: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     alignItems: 'center',
     marginBottom: 16,
     width: '100%',
@@ -114,22 +118,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   primaryButtonText: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
     color: COLORS.darkBrown,
-    fontSize: 16,
-    fontWeight: '700',
   },
   secondaryButton: {
     backgroundColor: COLORS.white,
     paddingVertical: 16,
-    borderRadius: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: COLORS.darkBrown,
     width: '100%',
   },
   secondaryButtonText: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
     color: COLORS.darkBrown,
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

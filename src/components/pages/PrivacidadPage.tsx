@@ -1,0 +1,217 @@
+﻿import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { COLORS } from '@/constants/colors';
+
+const sections = [
+  {
+    id: 1,
+    title: '1. RecopilaciÃ³n de Datos',
+    content:
+      'Recopilamos informaciÃ³n personal cuando creas una cuenta, realizas un pedido, participas en encuestas o nos contactas. Esto incluye nombre, correo electrÃ³nico, direcciÃ³n de entrega y datos de pago (cifrados).',
+  },
+  {
+    id: 2,
+    title: '2. Uso de la InformaciÃ³n',
+    content:
+      'Utilizamos tu informaciÃ³n para procesar pedidos, enviar confirmaciones, mejorar nuestros servicios, personalizar tu experiencia y enviarte comunicaciones de marketing (solo si lo autorizas).',
+  },
+  {
+    id: 3,
+    title: '3. ProtecciÃ³n de Datos',
+    content:
+      'Implementamos medidas de seguridad tÃ©cnicas y organizativas para proteger tu informaciÃ³n personal contra acceso no autorizado, pÃ©rdida o divulgaciÃ³n. Utilizamos cifrado SSL para todas las transacciones.',
+  },
+  {
+    id: 4,
+    title: '4. Compartir con Terceros',
+    content:
+      'No vendemos tu informaciÃ³n personal. Podemos compartirla con socios de entrega y procesadores de pago para completar tus pedidos, siempre bajo acuerdos de confidencialidad.',
+  },
+  {
+    id: 5,
+    title: '5. Derechos del Usuario',
+    content:
+      'Tienes derecho a acceder, modificar o eliminar tu informaciÃ³n personal en cualquier momento desde la configuraciÃ³n de tu cuenta o contactÃ¡ndonos directamente.',
+  },
+  {
+    id: 6,
+    title: '6. Cookies',
+    content:
+      'Usamos cookies para mejorar tu experiencia de navegaciÃ³n. Puedes configurar tu navegador para rechazarlas, aunque esto podrÃ­a afectar algunas funciones de la app.',
+  },
+  {
+    id: 7,
+    title: '7. Cambios a esta PolÃ­tica',
+    content:
+      'Podemos actualizar esta polÃ­tica periÃ³dicamente. Te notificaremos de cambios significativos por correo electrÃ³nico o mediante una notificaciÃ³n en la app.',
+  },
+  {
+    id: 8,
+    title: '8. Contacto',
+    content:
+      'Si tienes preguntas sobre esta polÃ­tica, contÃ¡ctanos en privacy@terroir.com o a travÃ©s del formulario de contacto de la app.',
+  },
+];
+
+interface Props {
+  showBackButton?: boolean;
+  onBack?: () => void;
+  useSafeArea?: boolean;
+}
+
+export default function PrivacidadPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
+  const router = useRouter();
+  const [expanded, setExpanded] = useState<number | null>(1);
+
+  const toggle = (id: number) => setExpanded((prev) => (prev === id ? null : id));
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
+  };
+
+  const Content = (
+    <>
+      {/* Header */}
+      <View style={styles.header}>
+        {showBackButton ? (
+          <TouchableOpacity onPress={handleBack}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 24 }} />
+        )}
+        <Text style={styles.headerTitle}>PolÃ­tica de Privacidad</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* Intro */}
+        <View style={styles.introCard}>
+          <Text style={styles.introEmoji}>ðŸ”’</Text>
+          <Text style={styles.introTitle}>Tu privacidad nos importa</Text>
+          <Text style={styles.introText}>
+            En Terroir nos comprometemos a proteger tu informaciÃ³n personal. Esta polÃ­tica describe cÃ³mo recopilamos, usamos y protegemos tus datos.
+          </Text>
+          <Text style={styles.introDate}>Ãšltima actualizaciÃ³n: Enero 2024</Text>
+        </View>
+
+        {/* Accordion sections */}
+        <View style={styles.accordion}>
+          {sections.map((section, index) => {
+            const isOpen = expanded === section.id;
+            const isLast = index === sections.length - 1;
+            return (
+              <View key={section.id}>
+                <TouchableOpacity
+                  style={[styles.accordionRow, !isLast && !isOpen && styles.accordionBorder]}
+                  onPress={() => toggle(section.id)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.accordionTitle}>{section.title}</Text>
+                  {isOpen ? (
+                    <ChevronUp size={18} color={COLORS.accent} />
+                  ) : (
+                    <ChevronDown size={18} color={COLORS.darkBrown + '60'} />
+                  )}
+                </TouchableOpacity>
+                {isOpen && (
+                  <View style={[styles.accordionContent, !isLast && styles.accordionBorder]}>
+                    <Text style={styles.accordionText}>{section.content}</Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Contact card */}
+        <View style={styles.contactCard}>
+          <Text style={styles.contactTitle}>Â¿Tienes preguntas?</Text>
+          <Text style={styles.contactText}>
+            EscrÃ­benos en cualquier momento a{' '}
+            <Text style={styles.contactEmail}>privacy@terroir.com</Text>
+          </Text>
+        </View>
+      </ScrollView>
+    </>
+  );
+
+  if (useSafeArea) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {Content}
+      </SafeAreaView>
+    );
+  }
+
+  return <View style={styles.safeArea}>{Content}</View>;
+}
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
+  content: { padding: 16, gap: 14, paddingBottom: 32 },
+  introCard: {
+    backgroundColor: COLORS.darkBrown,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  introEmoji: { fontSize: 32 },
+  introTitle: { color: COLORS.white, fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  introText: { color: COLORS.white + 'CC', fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  introDate: { color: COLORS.white + '80', fontSize: 11, marginTop: 4 },
+  accordion: {
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  accordionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  accordionBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  accordionTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.darkBrown, paddingRight: 8 },
+  accordionContent: { paddingHorizontal: 16, paddingBottom: 16 },
+  accordionText: { fontSize: 13, color: COLORS.muted, lineHeight: 20 },
+  contactCard: {
+    backgroundColor: COLORS.accent + '15',
+    borderWidth: 1,
+    borderColor: COLORS.accent + '30',
+    borderRadius: 12,
+    padding: 16,
+    gap: 4,
+    alignItems: 'center',
+  },
+  contactTitle: { fontSize: 15, fontWeight: '700', color: COLORS.darkBrown },
+  contactText: { fontSize: 13, color: COLORS.muted, textAlign: 'center' },
+  contactEmail: { color: COLORS.accent, fontWeight: '600' },
+});

@@ -1,8 +1,8 @@
 import { VStack } from '@/components/ui/vstack';
-import { COLORS } from '@/src/constants/colors';
-import { Product, products } from '@/src/data/products';
+import { COLORS } from '@/constants/colors';
+import { Product, products } from '@/data/products';
 import { useRouter } from 'expo-router';
-import HeaderLayout from '@/src/components/layouts/HeaderLayout';
+import HeaderLayout from '@/components/layouts/HeaderLayout';
 import {
   Check,
   Grid3X3,

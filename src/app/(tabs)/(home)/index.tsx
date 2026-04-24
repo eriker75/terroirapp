@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
-import { products } from '@/src/data/products';
-import HeaderLayout from '@/src/components/layouts/HeaderLayout';
+import { COLORS } from '@/constants/colors';
+import { products } from '@/data/products';
+import HeaderLayout from '@/components/layouts/HeaderLayout';
 
 const { width } = Dimensions.get('window');
 
@@ -213,8 +213,10 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   searchInput: {
+    fontFamily: 'JosefinSans-Light',
     flex: 1,
     fontSize: 14,
+    lineHeight: 22,
     color: COLORS.darkBrown,
   },
   bannerContainer: {
@@ -243,13 +245,17 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   bannerTitle: {
+    fontFamily: 'BodoniModa-ExtraBold',
     color: COLORS.white,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    lineHeight: 24,
+    letterSpacing: -0.44,
   },
   bannerSubtitle: {
+    fontFamily: 'JosefinSans-Light',
     color: COLORS.white + 'CC',
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 22,
     marginTop: 4,
   },
   dotsContainer: {
@@ -293,13 +299,18 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   promoTitle: {
+    fontFamily: 'BodoniModa-SemiBold',
     color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17.5,
+    lineHeight: 22,
+    letterSpacing: -0.35,
   },
   promoSubtitle: {
+    fontFamily: 'JosefinSans-Light',
     color: COLORS.white + 'CC',
-    fontSize: 12,
+    fontSize: 9,
+    lineHeight: 10,
+    letterSpacing: -0.18,
     marginTop: 2,
   },
   promoBtn: {
@@ -309,9 +320,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   promoBtnText: {
+    fontFamily: 'JosefinSans-SemiBold',
     color: COLORS.darkBrown,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
   },
   section: {
     marginBottom: 20,
@@ -324,16 +337,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'BodoniModa-SemiBold',
+    fontSize: 17.5,
+    lineHeight: 22,
+    letterSpacing: -0.35,
     color: COLORS.darkBrown,
     paddingHorizontal: 16,
     marginBottom: 12,
   },
   seeAll: {
+    fontFamily: 'JosefinSans-SemiBold',
     color: COLORS.accent,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
   },
   categoriesRow: {
     paddingHorizontal: 16,
@@ -359,9 +376,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.38)',
   },
   categoryName: {
-    fontSize: 11,
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 9,
+    lineHeight: 10,
+    letterSpacing: -0.18,
     color: COLORS.white,
-    fontWeight: '700',
     textAlign: 'center',
     paddingBottom: 7,
     paddingHorizontal: 4,
@@ -399,21 +418,27 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   discountText: {
+    fontFamily: 'JosefinSans-SemiBold',
     color: COLORS.darkBrown,
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    lineHeight: 10,
+    letterSpacing: -0.18,
   },
   productInfo: {
     padding: 12,
   },
   productCategory: {
-    fontSize: 11,
+    fontFamily: 'JosefinSans-Light',
+    fontSize: 9,
+    lineHeight: 10,
     color: COLORS.muted,
     marginBottom: 2,
   },
   productName: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'BodoniModa-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
     color: COLORS.darkBrown,
     marginBottom: 8,
   },
@@ -423,11 +448,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   productPrice: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+    letterSpacing: -0.3,
     color: COLORS.accent,
   },
   productRating: {
+    fontFamily: 'JosefinSans-Light',
     fontSize: 12,
     color: COLORS.yellow,
   },

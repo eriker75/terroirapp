@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { ArrowLeft, Heart, ShoppingCart, Star, MapPin, Flame, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
-import { products } from '@/src/data/products';
-import { useAppStore } from '@/src/store/useAppStore';
+import { COLORS } from '@/constants/colors';
+import { products } from '@/data/products';
+import { useAppStore } from '@/store/useAppStore';
 
 const { width } = Dimensions.get('window');
 

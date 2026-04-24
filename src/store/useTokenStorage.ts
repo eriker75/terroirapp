@@ -1,31 +1,14 @@
 import * as SecureStore from 'expo-secure-store';
 
-const KEYS = {
-  ACCESS_TOKEN: 'terroir:access_token',
-  REFRESH_TOKEN: 'terroir:refresh_token',
-} as const;
+const ACCESS_TOKEN_KEY = 'terroir_access_token';
 
 export const tokenStorage = {
   getAccessToken: (): Promise<string | null> =>
-    SecureStore.getItemAsync(KEYS.ACCESS_TOKEN),
+    SecureStore.getItemAsync(ACCESS_TOKEN_KEY),
 
   setAccessToken: (token: string): Promise<void> =>
-    SecureStore.setItemAsync(KEYS.ACCESS_TOKEN, token),
+    SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token),
 
   removeAccessToken: (): Promise<void> =>
-    SecureStore.deleteItemAsync(KEYS.ACCESS_TOKEN),
-
-  getRefreshToken: (): Promise<string | null> =>
-    SecureStore.getItemAsync(KEYS.REFRESH_TOKEN),
-
-  setRefreshToken: (token: string): Promise<void> =>
-    SecureStore.setItemAsync(KEYS.REFRESH_TOKEN, token),
-
-  removeRefreshToken: (): Promise<void> =>
-    SecureStore.deleteItemAsync(KEYS.REFRESH_TOKEN),
-
-  clearAll: async (): Promise<void> => {
-    await SecureStore.deleteItemAsync(KEYS.ACCESS_TOKEN);
-    await SecureStore.deleteItemAsync(KEYS.REFRESH_TOKEN);
-  },
+    SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY),
 };

@@ -8,9 +8,12 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Eye, EyeOff, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
+import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
+import { useRegisterMutation } from '@/services';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types/api.types';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -20,56 +23,36 @@ export default function RegisterScreen() {
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
-  const handleRegister = async () => {
-    setError('');
+  const { mutate: register, isPending, isError, error } = useRegisterMutation();
+
+  const apiErrorMessage = isError
+    ? ((error as AxiosError<ApiError>)?.response?.data?.message ?? 'Error al crear la cuenta')
+    : '';
+
+  const displayError = validationError || apiErrorMessage;
+
+  const handleRegister = () => {
+    setValidationError('');
     if (!name || !email || !password || !confirm) {
-      setError('Por favor completa todos los campos');
+      setValidationError('Por favor completa todos los campos');
       return;
     }
     if (password !== confirm) {
-      setError('Las contraseñas no coinciden');
+      setValidationError('Las contraseñas no coinciden');
       return;
     }
     if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setValidationError('La contraseña debe tener al menos 6 caracteres');
       return;
     }
-    setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      setSuccess(true);
-    } catch {
-      setError('Error al crear la cuenta. Inténtalo de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  if (success) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.successContainer}>
-          <View style={styles.successIcon}>
-            <CheckCircle2 size={48} color={COLORS.accent} />
-          </View>
-          <Text style={styles.successTitle}>¡Cuenta creada!</Text>
-          <Text style={styles.successSubtitle}>
-            Bienvenido a Terroir, {name.split(' ')[0]}. Tu cuenta está lista.
-          </Text>
-          <TouchableOpacity
-            style={styles.submitBtn}
-            onPress={() => router.replace('/(tabs)')}
-          >
-            <Text style={styles.submitBtnText}>Comenzar a explorar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+    const [firstName, ...rest] = name.trim().split(' ');
+    const lastName = rest.join(' ');
+
+    register({ email, password, firstName, lastName });
+  };
 
   return (
     <View style={styles.container}>
@@ -90,10 +73,10 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.cardBody}>
-            {error !== '' && (
+            {displayError !== '' && (
               <View style={styles.errorBox}>
                 <AlertCircle size={18} color={COLORS.red} />
-                <Text style={styles.errorText}>{error}</Text>
+                <Text style={styles.errorText}>{displayError}</Text>
               </View>
             )}
 
@@ -136,11 +119,7 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                 />
                 <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword((v) => !v)}>
-                  {showPassword ? (
-                    <EyeOff size={20} color={COLORS.darkBrown + '80'} />
-                  ) : (
-                    <Eye size={20} color={COLORS.darkBrown + '80'} />
-                  )}
+                  {showPassword ? <EyeOff size={20} color={COLORS.darkBrown + '80'} /> : <Eye size={20} color={COLORS.darkBrown + '80'} />}
                 </TouchableOpacity>
               </View>
             </View>
@@ -158,11 +137,7 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                 />
                 <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowConfirm((v) => !v)}>
-                  {showConfirm ? (
-                    <EyeOff size={20} color={COLORS.darkBrown + '80'} />
-                  ) : (
-                    <Eye size={20} color={COLORS.darkBrown + '80'} />
-                  )}
+                  {showConfirm ? <EyeOff size={20} color={COLORS.darkBrown + '80'} /> : <Eye size={20} color={COLORS.darkBrown + '80'} />}
                 </TouchableOpacity>
               </View>
               {confirm !== '' && confirm !== password && (
@@ -178,11 +153,11 @@ export default function RegisterScreen() {
             </Text>
 
             <TouchableOpacity
-              style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+              style={[styles.submitBtn, isPending && styles.submitBtnDisabled]}
               onPress={handleRegister}
-              disabled={isLoading}
+              disabled={isPending}
             >
-              {isLoading ? (
+              {isPending ? (
                 <ActivityIndicator color={COLORS.darkBrown} />
               ) : (
                 <Text style={styles.submitBtnText}>Crear cuenta</Text>
@@ -205,20 +180,9 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.lightBeige },
-  backBtn: {
-    padding: 20,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: 10,
-  },
+  backBtn: { padding: 20, position: 'absolute', top: 0, left: 0, zIndex: 10 },
   content: { flex: 1 },
-  contentContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-    paddingBottom: 40,
-  },
+  contentContainer: { flexGrow: 1, justifyContent: 'center', padding: 20, paddingBottom: 40 },
   registerCard: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
@@ -238,21 +202,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  brandName: {
-    color: COLORS.white,
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  brandSubtitle: {
-    color: COLORS.white + 'CC',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  cardBody: {
-    padding: 20,
-    gap: 14,
-  },
+  brandName: { color: COLORS.white, fontSize: 28, fontWeight: '700', marginBottom: 4 },
+  brandSubtitle: { color: COLORS.white + 'CC', fontSize: 14, textAlign: 'center' },
+  cardBody: { padding: 20, gap: 14 },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -309,21 +261,4 @@ const styles = StyleSheet.create({
   loginRow: { flexDirection: 'row', justifyContent: 'center' },
   loginText: { fontSize: 14, color: COLORS.darkBrown + '99' },
   loginLink: { fontSize: 14, color: COLORS.accent, fontWeight: '600' },
-  successContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    gap: 16,
-  },
-  successIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: COLORS.accent + '1A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successTitle: { fontSize: 26, fontWeight: '700', color: COLORS.darkBrown },
-  successSubtitle: { fontSize: 15, color: COLORS.muted, textAlign: 'center', lineHeight: 22 },
 });

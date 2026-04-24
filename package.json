@@ -11,6 +11,8 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo-google-fonts/bodoni-moda": "^0.4.2",
+    "@expo-google-fonts/josefin-sans": "^0.4.2",
     "@expo/html-elements": "^0.12.5",
     "@gluestack-ui/core": "^3.0.10",
     "@gluestack-ui/utils": "^3.0.11",

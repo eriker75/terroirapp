@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { ArrowLeft, MapPin, Package, Star } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
 
 type OrderStatus = 'Entregado' | 'En camino' | 'Procesando' | 'Cancelado';
 
@@ -209,15 +209,18 @@ export default function OrderDetailScreen() {
         <View style={styles.actionsContainer}>
           {order.status === 'En camino' && (
             <TouchableOpacity style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>Rastrear pedido</Text>
+              <Text style={styles.primaryBtnText}>Rastrear pedido en mapa</Text>
             </TouchableOpacity>
           )}
           {order.status === 'Entregado' && (
             <>
-              <TouchableOpacity style={styles.primaryBtn}>
-                <Star size={16} color={COLORS.darkBrown} />
-                <Text style={styles.primaryBtnText}>Calificar pedido</Text>
-              </TouchableOpacity>
+              <View style={styles.pointsEarnedCard}>
+                <Star size={20} color={COLORS.accent} fill={COLORS.accent} />
+                <View style={styles.pointsInfo}>
+                  <Text style={styles.pointsEarnedTitle}>Puntos ganados</Text>
+                  <Text style={styles.pointsEarnedText}>+{Math.floor(order.total * 10)} pts con esta compra</Text>
+                </View>
+              </View>
               <TouchableOpacity style={styles.outlineBtn}>
                 <Text style={styles.outlineBtnText}>Volver a pedir</Text>
               </TouchableOpacity>
@@ -318,4 +321,18 @@ const styles = StyleSheet.create({
     borderColor: COLORS.redBorder, borderRadius: 10, padding: 14,
   },
   cancelledText: { fontSize: 13, color: '#991B1B', lineHeight: 18, textAlign: 'center' },
+  pointsEarnedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FEF9C3',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 4,
+  },
+  pointsInfo: { flex: 1 },
+  pointsEarnedTitle: { fontSize: 13, fontWeight: '700', color: '#854D0E', textTransform: 'uppercase' },
+  pointsEarnedText: { fontSize: 15, fontWeight: '600', color: '#854D0E', marginTop: 2 },
 });

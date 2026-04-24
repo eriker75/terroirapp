@@ -5,100 +5,50 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
-import { COLORS } from '@/src/constants/colors';
+import { COLORS } from '@/constants/colors';
+import { useNotificationsQuery, useMarkNotificationReadMutation } from '@/services';
 
-type NotifType = 'promo' | 'order' | 'loyalty' | 'new';
-
-interface Notification {
-  id: number;
-  title: string;
-  description: string;
-  time: string;
-  icon: string;
-  read: boolean;
-  type: NotifType;
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'ahora';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
 }
-
-const initialNotifications: Notification[] = [
-  {
-    id: 1,
-    title: 'Oferta Especial de Café',
-    description: 'Tu café favorito Etiopía disponible con 20% descuento. ¡Solo por hoy!',
-    time: '1h',
-    icon: '🎉',
-    read: false,
-    type: 'promo',
-  },
-  {
-    id: 2,
-    title: 'Fin de Semana Especial',
-    description: '15% descuento en todos los blends premium este fin de semana.',
-    time: '3h',
-    icon: '☕',
-    read: false,
-    type: 'promo',
-  },
-  {
-    id: 3,
-    title: 'Tu pedido fue entregado',
-    description: 'Tu pedido #576404 fue entregado exitosamente. ¡Gracias por tu compra!',
-    time: '1d',
-    icon: '✅',
-    read: true,
-    type: 'order',
-  },
-  {
-    id: 4,
-    title: 'Café Brasil Especial',
-    description: 'Nuevo café Brasil Limited Edition ya disponible en nuestra tienda.',
-    time: '2d',
-    icon: '✨',
-    read: true,
-    type: 'new',
-  },
-  {
-    id: 5,
-    title: 'Programa de Lealtad',
-    description: 'Has acumulado 150 puntos. Canjéalos por tu próxima compra.',
-    time: '3d',
-    icon: '⭐',
-    read: true,
-    type: 'loyalty',
-  },
-  {
-    id: 6,
-    title: 'Tu pedido está en camino',
-    description: 'Tu pedido #741235 está siendo preparado y pronto estará en camino.',
-    time: '4d',
-    icon: '📦',
-    read: true,
-    type: 'order',
-  },
-];
 
 type FilterTab = 'all' | 'unread';
 
 export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [filter, setFilter] = useState<FilterTab>('all');
+  const { data: notifications = [], isLoading } = useNotificationsQuery();
+  const { mutate: markRead } = useMarkNotificationReadMutation();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const displayed = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
 
-  const markAllRead = () =>
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = () => {
+    notifications.filter((n) => !n.read).forEach((n) => markRead(n.id));
+  };
 
-  const markRead = (id: number) =>
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={COLORS.accent} />
+        </View>
+      </SafeAreaView>
     );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notificaciones</Text>
         {unreadCount > 0 ? (
@@ -110,7 +60,6 @@ export default function NotificationsScreen() {
         )}
       </View>
 
-      {/* Filter tabs + mark all read */}
       <View style={styles.filterRow}>
         <View style={styles.tabs}>
           <TouchableOpacity
@@ -133,7 +82,6 @@ export default function NotificationsScreen() {
         )}
       </View>
 
-      {/* List */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
         {displayed.length === 0 ? (
           <View style={styles.emptyState}>
@@ -147,19 +95,19 @@ export default function NotificationsScreen() {
             <TouchableOpacity
               key={notif.id}
               style={[styles.notifCard, !notif.read && styles.notifCardUnread]}
-              onPress={() => markRead(notif.id)}
+              onPress={() => !notif.read && markRead(notif.id)}
               activeOpacity={0.8}
             >
               <View style={styles.notifIcon}>
-                <Text style={styles.notifEmoji}>{notif.icon}</Text>
+                <Text style={styles.notifEmoji}>🔔</Text>
               </View>
               <View style={styles.notifBody}>
                 <View style={styles.notifTitleRow}>
                   <Text style={styles.notifTitle} numberOfLines={1}>{notif.title}</Text>
                   {!notif.read && <View style={styles.unreadDot} />}
                 </View>
-                <Text style={styles.notifDesc} numberOfLines={2}>{notif.description}</Text>
-                <Text style={styles.notifTime}>{notif.time}</Text>
+                <Text style={styles.notifDesc} numberOfLines={2}>{notif.body}</Text>
+                <Text style={styles.notifTime}>{relativeTime(notif.createdAt)}</Text>
               </View>
             </TouchableOpacity>
           ))
@@ -171,6 +119,7 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,9 +178,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.accent + '4D',
   },
   notifIcon: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: COLORS.lightBeige,
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
   },
   notifEmoji: { fontSize: 22 },
@@ -244,8 +196,11 @@ const styles = StyleSheet.create({
   },
   notifTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.darkBrown },
   unreadDot: {
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: COLORS.accent, flexShrink: 0,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent,
+    flexShrink: 0,
   },
   notifDesc: { fontSize: 13, color: COLORS.darkBrown + 'AA', lineHeight: 18 },
   notifTime: { fontSize: 11, color: COLORS.muted, marginTop: 2 },

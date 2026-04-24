@@ -1,5 +1,5 @@
 import FavoritosPage from '@/components/pages/FavoritosPage';
-import HeaderLayout from '@/src/components/layouts/HeaderLayout';
+import HeaderLayout from '@/components/layouts/HeaderLayout';
 
 export default function DeseosScreen() {
   return (
