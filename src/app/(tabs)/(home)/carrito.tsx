@@ -13,94 +13,63 @@ import { Trash2, Minus, Plus, ShoppingBag, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
-import {
-  useCartQuery,
-  useUpdateCartItemMutation,
-  useRemoveCartItemMutation,
-  useApplyCouponMutation,
-  useRemoveCouponMutation,
-} from '@/services';
-import type { Coupon } from '@/types';
+import { useCartStore } from '@/store/useCartStore';
 
 const PLACEHOLDER = require('@/assets/images/coffee-product-5.jpg');
-
-function calcDiscount(coupon: Coupon, subtotal: number): number {
-  if (coupon.discountType === 'PERCENTAGE') return subtotal * (coupon.amount / 100);
-  return coupon.amount;
-}
+const USD_TO_BS = 6.96;
 
 export default function CartScreen() {
   const router = useRouter();
   const [promoInput, setPromoInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [promoError, setPromoError] = useState(false);
 
-  const { data: cart, isLoading, isError } = useCartQuery();
-  const updateItemMutation = useUpdateCartItemMutation();
-  const removeItemMutation = useRemoveCartItemMutation();
-  const applyMutation = useApplyCouponMutation();
-  const removeCouponMutation = useRemoveCouponMutation();
-
-  const items = cart?.items ?? [];
-  const appliedCoupon = cart?.coupon;
-
-  const updateQty = (productId: string, qty: number) => {
-    if (qty <= 0) {
-      removeItemMutation.mutate(productId);
-    } else {
-      updateItemMutation.mutate({ productId, dto: { quantity: qty } });
-    }
-  };
-
-  const removeItem = (productId: string) => {
-    removeItemMutation.mutate(productId);
-  };
+  const cartItems = useCartStore((s) => s.items);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeFromCart = useCartStore((s) => s.removeFromCart);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const cartTotal = useCartStore((s) => s.cartTotal);
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
-    applyMutation.mutate({ couponCode: code }, {
-      onSuccess: () => setPromoInput(''),
-    });
+    if (code === 'WELCOME' || code === 'DESC15') {
+      setAppliedCoupon({ code, amount: 15, discountType: 'PERCENTAGE' });
+      setPromoInput('');
+      setPromoError(false);
+    } else {
+      setPromoError(true);
+    }
   };
 
-  const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const discountAmount = appliedCoupon ? calcDiscount(appliedCoupon, subtotal) : 0;
-  const tax = items.length > 0 ? subtotal * 0.1 : 0;
-  const shipping = items.length > 0 ? 3.0 : 0;
-  const total = subtotal - discountAmount + tax + shipping;
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+  };
 
-  if (isLoading) {
-    return (
-      <HeaderLayout>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
-        </View>
-      </HeaderLayout>
-    );
-  }
-
-  if (isError) {
-    return (
-      <HeaderLayout>
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>No se pudo cargar el carrito</Text>
-        </View>
-      </HeaderLayout>
-    );
-  }
+  const discountAmount = appliedCoupon ? (cartTotal * (appliedCoupon.amount / 100)) : 0;
+  const tax = cartItems.length > 0 ? (cartTotal - discountAmount) * 0.1 : 0;
+  const shipping = cartItems.length > 0 ? 3.0 : 0;
+  const total = (cartTotal - discountAmount) + tax + shipping;
 
   return (
     <HeaderLayout>
       <View style={styles.safeArea}>
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>Mi Carrito</Text>
-          {items.length > 0 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{items.reduce((s, i) => s + i.quantity, 0)}</Text>
-            </View>
+          {cartItems.length > 0 && (
+            <>
+              <View style={styles.countBadge}>
+                <Text style={styles.countText}>{cartItems.reduce((s, i) => s + i.quantity, 0)}</Text>
+              </View>
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity onPress={() => clearCart()} style={{ padding: 4 }}>
+                <Trash2 size={20} color={COLORS.red} />
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
-        {items.length === 0 ? (
+        {cartItems.length === 0 ? (
           <View style={styles.emptyState}>
             <ShoppingBag size={64} color={COLORS.border} />
             <Text style={styles.emptyTitle}>Tu carrito está vacío</Text>
@@ -115,47 +84,70 @@ export default function CartScreen() {
         ) : (
           <>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-              {items.map((item) => (
-                <View key={item.id} style={styles.itemCard}>
-                  <View style={styles.itemImage}>
-                    <Image
-                      source={item.product.mainImage ? { uri: item.product.mainImage } : PLACEHOLDER}
-                      style={styles.itemImg}
-                      resizeMode="cover"
-                    />
-                  </View>
+              {cartItems.map((item) => {
+                const p = item.product;
+                const hasDiscount = !!p.discount && p.discount > 0;
+                const finalPrice = hasDiscount ? p.price * (1 - p.discount! / 100) : p.price;
+                return (
+                  <View key={p.id} style={styles.itemCard}>
+                    <View style={styles.itemImage}>
+                      <Image
+                        source={p.image || PLACEHOLDER}
+                        style={styles.itemImg}
+                        resizeMode="cover"
+                      />
+                    </View>
 
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName} numberOfLines={2}>{item.product.name}</Text>
-                    <Text style={styles.itemDescription} numberOfLines={1}>{item.product.description}</Text>
-                    <Text style={styles.itemPrice}>${(item.product.price * item.quantity).toFixed(2)}</Text>
-                  </View>
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName} numberOfLines={2}>{p.name}</Text>
+                      <Text style={styles.itemDescription} numberOfLines={1}>{p.description}</Text>
+                      
+                      
+                      <View style={styles.priceRow}>
+                        {hasDiscount ? (
+                          <>
+                            <Text style={styles.originalPrice}>${p.price.toFixed(2)}</Text>
+                            <Text style={styles.itemPrice}>${finalPrice.toFixed(2)}</Text>
+                          </>
+                        ) : (
+                          <Text style={styles.itemPrice}>${p.price.toFixed(2)}</Text>
+                        )}
+                        <Text style={styles.priceBs}>Bs {(finalPrice * USD_TO_BS).toFixed(2)}</Text>
+                      </View>
+                      
+                      <View style={styles.pointsBadgeRow}>
+                        <View style={styles.pointsBadge}>
+                          <Text style={styles.pointsText}>⭐ {Math.round(finalPrice * 10)} pts</Text>
+                        </View>
+                      </View>
+                    </View>
 
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      style={styles.deleteBtn}
-                      onPress={() => removeItem(item.productId)}
-                    >
-                      <Trash2 size={16} color={COLORS.red} />
-                    </TouchableOpacity>
-                    <View style={styles.qtyControl}>
+                    <View style={styles.itemActions}>
                       <TouchableOpacity
-                        style={styles.qtyBtn}
-                        onPress={() => updateQty(item.productId, item.quantity - 1)}
+                        style={styles.deleteBtn}
+                        onPress={() => removeFromCart(p.id)}
                       >
-                        <Minus size={12} color={COLORS.darkBrown} />
+                        <Trash2 size={16} color={COLORS.red} />
                       </TouchableOpacity>
-                      <Text style={styles.qtyText}>{item.quantity}</Text>
-                      <TouchableOpacity
-                        style={styles.qtyBtn}
-                        onPress={() => updateQty(item.productId, item.quantity + 1)}
-                      >
-                        <Plus size={12} color={COLORS.darkBrown} />
-                      </TouchableOpacity>
+                      <View style={styles.qtyControl}>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={() => updateQuantity(p.id, item.quantity - 1)}
+                        >
+                          <Minus size={12} color={COLORS.darkBrown} />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyText}>{item.quantity}</Text>
+                        <TouchableOpacity
+                          style={styles.qtyBtn}
+                          onPress={() => updateQuantity(p.id, item.quantity + 1)}
+                        >
+                          <Plus size={12} color={COLORS.darkBrown} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
 
               {/* Promo code */}
               <View style={styles.promoSection}>
@@ -170,8 +162,7 @@ export default function CartScreen() {
                       )
                     </Text>
                     <TouchableOpacity
-                      onPress={() => removeCouponMutation.mutate()}
-                      disabled={removeCouponMutation.isPending}
+                      onPress={removeCoupon}
                     >
                       <X size={16} color={COLORS.green} />
                     </TouchableOpacity>
@@ -183,7 +174,7 @@ export default function CartScreen() {
                       value={promoInput}
                       onChangeText={(t) => {
                         setPromoInput(t);
-                        if (applyMutation.isError) applyMutation.reset();
+                        setPromoError(false);
                       }}
                       placeholder="Ej. WELCOME"
                       placeholderTextColor={COLORS.muted}
@@ -192,15 +183,14 @@ export default function CartScreen() {
                       onSubmitEditing={applyPromo}
                     />
                     <TouchableOpacity
-                      style={[styles.promoApplyBtn, applyMutation.isPending && { opacity: 0.6 }]}
+                      style={styles.promoApplyBtn}
                       onPress={applyPromo}
-                      disabled={applyMutation.isPending}
                     >
                       <Text style={styles.promoApplyText}>Aplicar</Text>
                     </TouchableOpacity>
                   </View>
                 )}
-                {applyMutation.isError && !appliedCoupon && (
+                {promoError && !appliedCoupon && (
                   <View style={styles.promoError}>
                     <Text style={styles.promoErrorText}>Código inválido o no encontrado</Text>
                   </View>
@@ -212,7 +202,7 @@ export default function CartScreen() {
             <View style={styles.summary}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal</Text>
-                <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+                <Text style={styles.summaryValue}>${cartTotal.toFixed(2)}</Text>
               </View>
               {appliedCoupon && (
                 <View style={styles.summaryRow}>
@@ -309,7 +299,23 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1 },
   itemName: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
   itemDescription: { fontSize: 11, color: COLORS.muted, marginTop: 2 },
-  itemPrice: { fontSize: 15, fontWeight: '700', color: COLORS.accent, marginTop: 6 },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  originalPrice: { fontSize: 12, textDecorationLine: 'line-through', color: COLORS.muted },
+  itemPrice: { fontSize: 15, fontWeight: '700', color: COLORS.accent },
+  priceBs: { fontSize: 12, fontWeight: '500', color: COLORS.muted, marginLeft: 4 },
+  pointsBadgeRow: { marginTop: 4, alignItems: 'flex-start' },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FEF9C3',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  pointsText: { fontSize: 10, color: '#854D0E', fontWeight: '700' },
   itemActions: { alignItems: 'flex-end', justifyContent: 'space-between' },
   deleteBtn: {
     padding: 6,

@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, ChevronRight, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import { useCartStore } from '@/store/useCartStore';
+import { products } from '@/data/products';
 
 type OrderStatus = 'Entregado' | 'En camino' | 'Procesando' | 'Cancelado';
 
@@ -85,6 +87,13 @@ interface Props {
 
 export default function OrdenesPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
+  const addToCart = useCartStore((s) => s.addToCart);
+
+  const handleReorder = () => {
+    addToCart(products[0], 1);
+    addToCart(products[1], 1);
+    router.push('/(tabs)/carrito' as any);
+  };
 
   const handleBack = () => {
     if (onBack) {
@@ -196,7 +205,7 @@ export default function OrdenesPage({ showBackButton = false, onBack, useSafeAre
                 )}
                 {order.status === 'Entregado' && (
                   <View style={styles.orderActions}>
-                    <TouchableOpacity style={styles.reorderBtn}>
+                    <TouchableOpacity style={styles.reorderBtn} onPress={handleReorder}>
                       <Text style={styles.reorderBtnText}>Volver a pedir</Text>
                     </TouchableOpacity>
                   </View>

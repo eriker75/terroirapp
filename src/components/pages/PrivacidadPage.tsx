@@ -1,4 +1,4 @@
-﻿import {
+import {
   View,
   Text,
   ScrollView,
@@ -6,7 +6,7 @@
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ArrowLeft, ChevronDown, ChevronUp, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { COLORS } from '@/constants/colors';
@@ -14,51 +14,51 @@ import { COLORS } from '@/constants/colors';
 const sections = [
   {
     id: 1,
-    title: '1. RecopilaciÃ³n de Datos',
+    title: '1. Recopilación de Datos',
     content:
-      'Recopilamos informaciÃ³n personal cuando creas una cuenta, realizas un pedido, participas en encuestas o nos contactas. Esto incluye nombre, correo electrÃ³nico, direcciÃ³n de entrega y datos de pago (cifrados).',
+      'Recopilamos información personal cuando creas una cuenta, realizas un pedido, participas en encuestas o nos contactas. Esto incluye nombre, correo electrónico, dirección de entrega y datos de pago (cifrados).',
   },
   {
     id: 2,
-    title: '2. Uso de la InformaciÃ³n',
+    title: '2. Uso de la Información',
     content:
-      'Utilizamos tu informaciÃ³n para procesar pedidos, enviar confirmaciones, mejorar nuestros servicios, personalizar tu experiencia y enviarte comunicaciones de marketing (solo si lo autorizas).',
+      'Utilizamos tu información para procesar pedidos, enviar confirmaciones, mejorar nuestros servicios, personalizar tu experiencia y enviarte comunicaciones de marketing (solo si lo autorizas).',
   },
   {
     id: 3,
-    title: '3. ProtecciÃ³n de Datos',
+    title: '3. Protección de Datos',
     content:
-      'Implementamos medidas de seguridad tÃ©cnicas y organizativas para proteger tu informaciÃ³n personal contra acceso no autorizado, pÃ©rdida o divulgaciÃ³n. Utilizamos cifrado SSL para todas las transacciones.',
+      'Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra acceso no autorizado, pérdida o divulgación. Utilizamos cifrado SSL para todas las transacciones.',
   },
   {
     id: 4,
     title: '4. Compartir con Terceros',
     content:
-      'No vendemos tu informaciÃ³n personal. Podemos compartirla con socios de entrega y procesadores de pago para completar tus pedidos, siempre bajo acuerdos de confidencialidad.',
+      'No vendemos tu información personal. Podemos compartirla con socios de entrega y procesadores de pago para completar tus pedidos, siempre bajo acuerdos de confidencialidad.',
   },
   {
     id: 5,
     title: '5. Derechos del Usuario',
     content:
-      'Tienes derecho a acceder, modificar o eliminar tu informaciÃ³n personal en cualquier momento desde la configuraciÃ³n de tu cuenta o contactÃ¡ndonos directamente.',
+      'Tienes derecho a acceder, modificar o eliminar tu información personal en cualquier momento desde la configuración de tu cuenta o contactándonos directamente.',
   },
   {
     id: 6,
     title: '6. Cookies',
     content:
-      'Usamos cookies para mejorar tu experiencia de navegaciÃ³n. Puedes configurar tu navegador para rechazarlas, aunque esto podrÃ­a afectar algunas funciones de la app.',
+      'Usamos cookies para mejorar tu experiencia de navegación. Puedes configurar tu navegador para rechazarlas, aunque esto podría afectar algunas funciones de la app.',
   },
   {
     id: 7,
-    title: '7. Cambios a esta PolÃ­tica',
+    title: '7. Cambios a esta Política',
     content:
-      'Podemos actualizar esta polÃ­tica periÃ³dicamente. Te notificaremos de cambios significativos por correo electrÃ³nico o mediante una notificaciÃ³n en la app.',
+      'Podemos actualizar esta política periódicamente. Te notificaremos de cambios significativos por correo electrónico o mediante una notificación en la app.',
   },
   {
     id: 8,
     title: '8. Contacto',
     content:
-      'Si tienes preguntas sobre esta polÃ­tica, contÃ¡ctanos en privacy@terroir.com o a travÃ©s del formulario de contacto de la app.',
+      'Si tienes preguntas sobre esta política, contáctanos en privacy@terroir.com o a través del formulario de contacto de la app.',
   },
 ];
 
@@ -93,19 +93,21 @@ export default function PrivacidadPage({ showBackButton = false, onBack, useSafe
         ) : (
           <View style={{ width: 24 }} />
         )}
-        <Text style={styles.headerTitle}>PolÃ­tica de Privacidad</Text>
+        <Text style={styles.headerTitle}>Política de Privacidad</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Intro */}
         <View style={styles.introCard}>
-          <Text style={styles.introEmoji}>ðŸ”’</Text>
+          <View style={styles.introIconBox}>
+            <Lock size={32} color={COLORS.accent} />
+          </View>
           <Text style={styles.introTitle}>Tu privacidad nos importa</Text>
           <Text style={styles.introText}>
-            En Terroir nos comprometemos a proteger tu informaciÃ³n personal. Esta polÃ­tica describe cÃ³mo recopilamos, usamos y protegemos tus datos.
+            En Terroir nos comprometemos a proteger tu información personal. Esta política describe cómo recopilamos, usamos y protegemos tus datos.
           </Text>
-          <Text style={styles.introDate}>Ãšltima actualizaciÃ³n: Enero 2024</Text>
+          <Text style={styles.introDate}>Última actualización: Enero 2024</Text>
         </View>
 
         {/* Accordion sections */}
@@ -139,9 +141,9 @@ export default function PrivacidadPage({ showBackButton = false, onBack, useSafe
 
         {/* Contact card */}
         <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Â¿Tienes preguntas?</Text>
+          <Text style={styles.contactTitle}>¿Tienes preguntas?</Text>
           <Text style={styles.contactText}>
-            EscrÃ­benos en cualquier momento a{' '}
+            Escríbenos en cualquier momento a{' '}
             <Text style={styles.contactEmail}>privacy@terroir.com</Text>
           </Text>
         </View>
@@ -180,7 +182,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  introEmoji: { fontSize: 32 },
+  introIconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.white + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
   introTitle: { color: COLORS.white, fontSize: 18, fontWeight: '700', textAlign: 'center' },
   introText: { color: COLORS.white + 'CC', fontSize: 13, textAlign: 'center', lineHeight: 20 },
   introDate: { color: COLORS.white + '80', fontSize: 11, marginTop: 4 },

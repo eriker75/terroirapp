@@ -2,12 +2,13 @@ import { Tabs } from 'expo-router';
 import { Home, Heart, Grid3X3, ShoppingBag, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/colors';
-import { useAppStore } from '@/store/useAppStore';
+import { useCartStore } from '@/store/useCartStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const cartCount = useAppStore((s) => s.cartCount);
-  const wishlistCount = useAppStore((s) => s.wishlistCount);
+  const cartCount = useCartStore((s) => s.cartCount);
+  const wishlistCount = useWishlistStore((s) => s.wishlistCount);
 
   return (
     <Tabs
@@ -76,6 +77,13 @@ export default function TabLayout() {
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => <User color={color} size={size - 2} />,
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            // Esto fuerza a React Navigation a volver a la raíz de ese stack específico
+            navigation.navigate('(dashboard)/perfil', { screen: 'index' });
+          },
+        })}
       />
 
       {/* Sub-screens - hidden from tab bar */}

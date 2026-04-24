@@ -12,7 +12,8 @@ import { ArrowLeft, Heart, ShoppingCart, Star, MapPin, Flame, Check } from 'luci
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { products } from '@/data/products';
-import { useAppStore } from '@/store/useAppStore';
+import { useCartStore } from '@/store/useCartStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
 
 const { width } = Dimensions.get('window');
 
@@ -26,12 +27,14 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const product = products.find((p) => p.id === id);
-  const addToCart = useAppStore((s) => s.addToCart);
-  const addToWishlist = useAppStore((s) => s.addToWishlist);
+  const addToCartAction = useCartStore((s) => s.addToCart);
+  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
+  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
 
-  const [inWishlist, setInWishlist] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   const [qty, setQty] = useState(1);
+
+  const inWishlist = product ? wishlistIds.includes(product.id) : false;
 
   if (!product) {
     return (
@@ -51,19 +54,24 @@ export default function ProductDetailScreen() {
     .slice(0, 4);
 
   const handleAddToCart = () => {
-    addToCart();
+    addToCartAction(product, qty);
     setAddedToCart(true);
     setTimeout(() => router.push('/(tabs)/carrito'), 1200);
   };
 
   const handleToggleWishlist = () => {
-    if (!inWishlist) addToWishlist();
-    setInWishlist((v) => !v);
+    toggleWishlist(product.id);
   };
 
   const categoryLabel =
     product.category === 'coffee' ? 'Café' :
     product.category === 'beverages' ? 'Bebida' : 'Accesorio';
+
+  const USD_TO_BS = 6.96;
+  const hasDiscount = !!product.discount && product.discount > 0;
+  const basePrice = product.price;
+  const finalPrice = hasDiscount ? basePrice * (1 - product.discount! / 100) : basePrice;
+  const points = Math.floor(finalPrice * 10);
 
   return (
     <View style={styles.safeArea}>
@@ -99,10 +107,9 @@ export default function ProductDetailScreen() {
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryBadgeText}>{categoryLabel}</Text>
             </View>
-            <View style={styles.ratingRow}>
+            <View style={styles.pointsBadge}>
               <Star size={13} color={COLORS.yellow} fill={COLORS.yellow} />
-              <Text style={styles.ratingText}>{product.rating}</Text>
-              <Text style={styles.reviewCount}>({product.reviewCount} reseñas)</Text>
+              <Text style={styles.pointsText}>{points} pts</Text>
             </View>
           </View>
 
@@ -110,12 +117,13 @@ export default function ProductDetailScreen() {
           <Text style={styles.description}>{product.description}</Text>
 
           <View style={styles.priceRow}>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
-            {product.discount && (
+            {hasDiscount && (
               <Text style={styles.originalPrice}>
-                ${(product.price / (1 - product.discount / 100)).toFixed(2)}
+                ${basePrice.toFixed(2)}
               </Text>
             )}
+            <Text style={styles.price}>${finalPrice.toFixed(2)}</Text>
+            <Text style={styles.pricebs}>Bs {(finalPrice * USD_TO_BS).toFixed(2)}</Text>
           </View>
 
           {/* Tags */}
@@ -156,7 +164,7 @@ export default function ProductDetailScreen() {
               <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty((q) => q + 1)}>
                 <Text style={styles.qtyBtnText}>+</Text>
               </TouchableOpacity>
-              <Text style={styles.qtyTotal}>${(product.price * qty).toFixed(2)}</Text>
+              <Text style={styles.qtyTotal}>${(finalPrice * qty).toFixed(2)}</Text>
             </View>
           </View>
 
@@ -188,25 +196,31 @@ export default function ProductDetailScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.upsellsRow}
               >
-                {upsells.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.upsellCard}
-                    onPress={() => router.push(`/productos/${item.id}` as any)}
-                    activeOpacity={0.88}
-                  >
-                    <Image source={item.image} style={styles.upsellImage} resizeMode="cover" />
-                    {item.discount && (
-                      <View style={styles.upsellBadge}>
-                        <Text style={styles.upsellBadgeText}>-{item.discount}%</Text>
+                {upsells.map((item) => {
+                  const uBasePrice = item.price;
+                  const uHasDiscount = !!item.discount && item.discount > 0;
+                  const uFinalPrice = uHasDiscount ? uBasePrice * (1 - item.discount! / 100) : uBasePrice;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.upsellCard}
+                      onPress={() => router.push(`/productos/${item.id}` as any)}
+                      activeOpacity={0.88}
+                    >
+                      <Image source={item.image} style={styles.upsellImage} resizeMode="cover" />
+                      {uHasDiscount && (
+                        <View style={styles.upsellBadge}>
+                          <Text style={styles.upsellBadgeText}>-{item.discount}%</Text>
+                        </View>
+                      )}
+                      <View style={styles.upsellInfo}>
+                        <Text style={styles.upsellName} numberOfLines={2}>{item.name}</Text>
+                        <Text style={styles.upsellPrice}>${uFinalPrice.toFixed(2)}</Text>
                       </View>
-                    )}
-                    <View style={styles.upsellInfo}>
-                      <Text style={styles.upsellName} numberOfLines={2}>{item.name}</Text>
-                      <Text style={styles.upsellPrice}>${item.price.toFixed(2)}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
           )}
@@ -247,14 +261,14 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   categoryBadge: { backgroundColor: COLORS.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   categoryBadgeText: { fontSize: 11, fontWeight: '600', color: COLORS.darkBrown },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
-  reviewCount: { fontSize: 11, color: COLORS.muted },
+  pointsBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FEF9C3', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDE68A' },
+  pointsText: { fontSize: 13, fontWeight: '700', color: '#854D0E' },
   productName: { fontSize: 24, fontWeight: '800', color: COLORS.darkBrown, marginBottom: 4, lineHeight: 30 },
   description: { fontSize: 14, color: COLORS.muted, marginBottom: 12 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  priceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 14 },
   price: { fontSize: 26, fontWeight: '800', color: COLORS.accent },
-  originalPrice: { fontSize: 16, color: COLORS.muted, textDecorationLine: 'line-through' },
+  originalPrice: { fontSize: 16, color: COLORS.muted, textDecorationLine: 'line-through', marginBottom: 4 },
+  pricebs: { fontSize: 14, fontWeight: '600', color: COLORS.muted, marginBottom: 4 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   tag: {
     flexDirection: 'row', alignItems: 'center', gap: 4,

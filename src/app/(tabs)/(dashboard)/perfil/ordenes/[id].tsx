@@ -71,6 +71,18 @@ const ordersData: Record<string, {
     address: '4140 Parker Rd., Allentown, NM 31134',
     trackingCode: 'TRR-D3342-P',
   },
+  '999': {
+    orderId: '#982134',
+    date: 'Justo ahora',
+    status: 'Procesando',
+    items: [
+      { id: 1, name: 'Espresso Obsidian', emoji: '☕', price: 5.00, qty: 2 },
+      { id: 2, name: 'Filtro Premium', emoji: '🔧', price: 24.99, qty: 1 },
+    ],
+    subtotal: 34.99, discount: 0, tax: 3.50, shipping: 5.00, total: 43.49,
+    address: '4140 Parker Rd., Allentown, NM 31134',
+    trackingCode: 'TRR-NEW-001',
+  },
 };
 
 const STATUS_CONFIG: Record<OrderStatus, { bg: string; text: string; border: string; emoji: string }> = {
@@ -89,7 +101,7 @@ export default function OrderDetailScreen() {
     return (
       <View style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.navigate('/(tabs)/(dashboard)/perfil/ordenes' as any)}>
             <ArrowLeft size={24} color={COLORS.darkBrown} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pedido no encontrado</Text>
@@ -108,7 +120,7 @@ export default function OrderDetailScreen() {
     <View style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.navigate('/(tabs)/(dashboard)/perfil/ordenes' as any)}>
           <ArrowLeft size={24} color={COLORS.darkBrown} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalles del Pedido</Text>

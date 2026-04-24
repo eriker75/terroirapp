@@ -3,14 +3,12 @@ import { COLORS } from '@/constants/colors';
 import { Product, products } from '@/data/products';
 import { useRouter } from 'expo-router';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
+import { ProductCard } from '@/components/ui/ProductCard';
 import {
   Check,
   Grid3X3,
-  Heart,
   List,
-  Plus,
   Search,
-  ShoppingCart,
   Sliders, X,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +26,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useCartStore } from '@/store/useCartStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
 
 const { width } = Dimensions.get('window');
 const PAGE_SIZE = 10;
@@ -93,7 +93,9 @@ export default function ProductsScreen() {
   const [filter, setFilter]     = useState('all');
   const [sortBy, setSortBy]     = useState<SortBy>('newest');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [wishlist, setWishlist]   = useState<string[]>([]);
+  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
+  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+  const addToCartAction = useCartStore((s) => s.addToCart);
   const [cartAdded, setCartAdded] = useState<string[]>([]);
 
   // Pagination state
@@ -123,36 +125,36 @@ export default function ProductsScreen() {
     }, 1000);
   }, [hasMore]);
 
-  const toggleWishlist = (id: string) =>
-    setWishlist((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-
-  const addToCart = (id: string) => {
-    setCartAdded((prev) => [...prev, id]);
-    setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== id)), 1500);
+  const addToCart = (product: Product) => {
+    addToCartAction(product);
+    setCartAdded((prev) => [...prev, product.id]);
+    setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
   };
 
   /* ── Render helpers ────────────────────────────────────────────── */
   const renderGridItem = useCallback(({ item }: { item: Product }) => (
-    <ProductCardGrid
+    <ProductCard
       product={item}
-      inWishlist={wishlist.includes(item.id)}
+      variant="grid"
+      inWishlist={wishlistIds.includes(item.id)}
       inCart={cartAdded.includes(item.id)}
       onToggleWishlist={() => toggleWishlist(item.id)}
-      onAddToCart={() => addToCart(item.id)}
-      onPress={() => router.push(`/producto/${item.id}` as any)}
+      onAddToCart={() => addToCart(item)}
+      onPress={() => router.push(`/productos/${item.id}` as any)}
     />
-  ), [wishlist, cartAdded]);
+  ), [wishlistIds, cartAdded]);
 
   const renderListItem = useCallback(({ item }: { item: Product }) => (
-    <ProductCardList
+    <ProductCard
       product={item}
-      inWishlist={wishlist.includes(item.id)}
+      variant="list"
+      inWishlist={wishlistIds.includes(item.id)}
       inCart={cartAdded.includes(item.id)}
       onToggleWishlist={() => toggleWishlist(item.id)}
-      onAddToCart={() => addToCart(item.id)}
-      onPress={() => router.push(`/producto/${item.id}` as any)}
+      onAddToCart={() => addToCart(item)}
+      onPress={() => router.push(`/productos/${item.id}` as any)}
     />
-  ), [wishlist, cartAdded]);
+  ), [wishlistIds, cartAdded]);
 
   const ListFooter = () => (
     <View style={styles.footer}>
@@ -316,103 +318,6 @@ export default function ProductsScreen() {
   );
 }
 
-/* ─── Grid Card ───────────────────────────────────────────────────── */
-function ProductCardGrid({
-  product, inWishlist, inCart, onToggleWishlist, onAddToCart, onPress,
-}: {
-  product: Product; inWishlist: boolean; inCart: boolean;
-  onToggleWishlist: () => void; onAddToCart: () => void; onPress: () => void;
-}) {
-  const categoryLabel =
-    product.category === 'coffee' ? 'Café' :
-    product.category === 'beverages' ? 'Bebida' : 'Accesorio';
-
-  return (
-    <TouchableOpacity activeOpacity={0.92} style={gridStyles.card} onPress={onPress}>
-      <View style={gridStyles.imageBox}>
-        <Image source={product.image} style={gridStyles.image} resizeMode="cover" />
-        <TouchableOpacity style={gridStyles.heartBtn} onPress={onToggleWishlist}>
-          <Heart size={15}
-            color={inWishlist ? COLORS.accent : COLORS.darkBrown + '70'}
-            fill={inWishlist ? COLORS.accent : 'transparent'}
-          />
-        </TouchableOpacity>
-        {product.discount && (
-          <View style={gridStyles.discountBadge}>
-            <Text style={gridStyles.discountText}>-{product.discount}%</Text>
-          </View>
-        )}
-        {product.origin && (
-          <View style={gridStyles.originBadge}>
-            <Text style={gridStyles.originText}>{product.origin}</Text>
-          </View>
-        )}
-      </View>
-      <View style={gridStyles.info}>
-        <Text style={gridStyles.category}>{categoryLabel}</Text>
-        <Text style={gridStyles.name} numberOfLines={2}>{product.name}</Text>
-        <View style={gridStyles.footer}>
-          <View>
-            <Text style={gridStyles.price}>${product.price.toFixed(2)}</Text>
-            <Text style={gridStyles.pricebs}>Bs {(product.price * USD_TO_BS).toFixed(2)}</Text>
-          </View>
-          <TouchableOpacity
-            style={[gridStyles.cartBtn, inCart && gridStyles.cartBtnDone]}
-            onPress={onAddToCart}
-          >
-            {inCart ? <Check size={14} color={COLORS.white} /> : <Plus size={14} color={COLORS.darkBrown} />}
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-/* ─── List Card ───────────────────────────────────────────────────── */
-function ProductCardList({
-  product, inWishlist, inCart, onToggleWishlist, onAddToCart, onPress,
-}: {
-  product: Product; inWishlist: boolean; inCart: boolean;
-  onToggleWishlist: () => void; onAddToCart: () => void; onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity activeOpacity={0.92} style={listStyles.card} onPress={onPress}>
-      <View style={listStyles.imageBox}>
-        <Image source={product.image} style={listStyles.image} resizeMode="cover" />
-        {product.discount && (
-          <View style={listStyles.discountBadge}>
-            <Text style={listStyles.discountText}>-{product.discount}%</Text>
-          </View>
-        )}
-      </View>
-      <View style={listStyles.info}>
-        <Text style={listStyles.name} numberOfLines={1}>{product.name}</Text>
-        <Text style={listStyles.description} numberOfLines={1}>{product.description}</Text>
-        {product.origin && <Text style={listStyles.origin}>📍 {product.origin}</Text>}
-        <Text style={listStyles.price}>${product.price.toFixed(2)}</Text>
-        <Text style={listStyles.pricebs}>Bs {(product.price * USD_TO_BS).toFixed(2)}</Text>
-      </View>
-      <View style={listStyles.actions}>
-        <TouchableOpacity style={listStyles.heartBtn} onPress={onToggleWishlist}>
-          <Heart size={15}
-            color={inWishlist ? COLORS.accent : COLORS.darkBrown + '60'}
-            fill={inWishlist ? COLORS.accent : 'transparent'}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[listStyles.cartBtn, inCart && listStyles.cartBtnDone]}
-          onPress={onAddToCart}
-        >
-          {inCart ? <Check size={14} color={COLORS.white} /> : <ShoppingCart size={14} color={COLORS.darkBrown} />}
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-/* ─── Styles ──────────────────────────────────────────────────────── */
-const cardW = (width - 44) / 2;
-
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
   headerRow: {
@@ -484,76 +389,4 @@ const styles = StyleSheet.create({
   },
   sortOptionText: { fontSize: 15, color: COLORS.darkBrown + '99' },
   sortOptionActive: { color: COLORS.darkBrown, fontWeight: '600' },
-  overlay2: { flex: 1, backgroundColor: '#00000050' },
-});
-
-const gridStyles = StyleSheet.create({
-  card: {
-    width: cardW, backgroundColor: COLORS.white, borderRadius: 14,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
-  },
-  imageBox: { height: 140, backgroundColor: COLORS.lightBeige, position: 'relative' },
-  image: { width: '100%', height: '100%' },
-  heartBtn: {
-    position: 'absolute', top: 8, right: 8,
-    backgroundColor: COLORS.white, borderRadius: 16, padding: 6,
-    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
-  },
-  discountBadge: {
-    position: 'absolute', top: 8, left: 8,
-    backgroundColor: COLORS.accent, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5,
-  },
-  discountText: { color: COLORS.darkBrown, fontSize: 10, fontWeight: '700' },
-  originBadge: {
-    position: 'absolute', bottom: 8, left: 8,
-    backgroundColor: COLORS.darkBrown + 'CC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5,
-  },
-  originText: { color: COLORS.white, fontSize: 9, fontWeight: '600' },
-  info: { padding: 10 },
-  category: { fontSize: 10, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 },
-  name: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown, marginBottom: 8, lineHeight: 17 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  price: { fontSize: 14, fontWeight: '700', color: COLORS.accent },
-  pricebs: { fontSize: 11, fontWeight: '500', color: COLORS.muted, marginTop: 1 },
-  rating: { fontSize: 11, color: COLORS.yellow, marginTop: 1 },
-  cartBtn: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center',
-  },
-  cartBtnDone: { backgroundColor: COLORS.green },
-});
-
-const listStyles = StyleSheet.create({
-  card: {
-    flexDirection: 'row', gap: 12, backgroundColor: COLORS.white,
-    borderRadius: 14, borderWidth: 1, borderColor: COLORS.border,
-    padding: 12, alignItems: 'center',
-  },
-  imageBox: {
-    width: 86, height: 86, backgroundColor: COLORS.lightBeige,
-    borderRadius: 10, overflow: 'hidden', flexShrink: 0, position: 'relative',
-  },
-  image: { width: '100%', height: '100%' },
-  discountBadge: {
-    position: 'absolute', bottom: 4, left: 4,
-    backgroundColor: COLORS.accent, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4,
-  },
-  discountText: { color: COLORS.darkBrown, fontSize: 9, fontWeight: '700' },
-  info: { flex: 1, gap: 2 },
-  name: { fontSize: 14, fontWeight: '700', color: COLORS.darkBrown },
-  description: { fontSize: 11, color: COLORS.muted },
-  origin: { fontSize: 10, color: COLORS.muted },
-  rating: { fontSize: 11, color: COLORS.yellow },
-  price: { fontSize: 15, fontWeight: '700', color: COLORS.accent, marginTop: 2 },
-  pricebs: { fontSize: 11, fontWeight: '500', color: COLORS.muted },
-  actions: { gap: 8, alignItems: 'center' },
-  heartBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: COLORS.lightBeige, alignItems: 'center', justifyContent: 'center',
-  },
-  cartBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center',
-  },
-  cartBtnDone: { backgroundColor: COLORS.green },
 });

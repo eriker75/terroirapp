@@ -14,6 +14,9 @@ import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { products } from '@/data/products';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
+import { ProductCard } from '@/components/ui/ProductCard';
+import { useCartStore } from '@/store/useCartStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
 
 const { width } = Dimensions.get('window');
 
@@ -54,6 +57,17 @@ export default function HomeScreen() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [search, setSearch] = useState('');
   const featuredProducts = products.slice(0, 4);
+  const addToCart = useCartStore((s) => s.addToCart);
+  
+  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
+  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+
+  const [cartAdded, setCartAdded] = useState<string[]>([]);
+  const handleAddToCart = (product: any) => {
+    addToCart(product);
+    setCartAdded((prev) => [...prev, product.id]);
+    setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
+  };
 
   return (
     <HeaderLayout>
@@ -153,30 +167,16 @@ export default function HomeScreen() {
             </View>
             <View style={styles.productsGrid}>
               {featuredProducts.map((product) => (
-                <TouchableOpacity
+                <ProductCard
                   key={product.id}
-                  style={styles.productCard}
-                  onPress={() => router.push('/(tabs)/productos')}
-                >
-                  <View style={styles.productImageBox}>
-                    <Image source={product.image} style={styles.productImage} resizeMode="cover" />
-                    {product.discount && (
-                      <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>-{product.discount}%</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.productInfo}>
-                    <Text style={styles.productCategory}>
-                      {product.category === 'coffee' ? 'Café' : product.category === 'beverages' ? 'Bebida' : 'Accesorio'}
-                    </Text>
-                    <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
-                    <View style={styles.productFooter}>
-                      <Text style={styles.productPrice}>${product.price.toFixed(2)}</Text>
-                      <Text style={styles.productRating}>★ {product.rating}</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
+                  product={product}
+                  variant="grid"
+                  inWishlist={wishlistIds.includes(product.id)}
+                  inCart={cartAdded.includes(product.id)}
+                  onToggleWishlist={() => toggleWishlist(product.id)}
+                  onAddToCart={() => handleAddToCart(product)}
+                  onPress={() => router.push(`/productos/${product.id}` as any)}
+                />
               ))}
             </View>
           </View>
@@ -390,73 +390,5 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 16,
     gap: 12,
-  },
-  productCard: {
-    width: (width - 44) / 2,
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-  },
-  productImageBox: {
-    height: 120,
-    backgroundColor: COLORS.lightBeige,
-    position: 'relative',
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  discountText: {
-    fontFamily: 'JosefinSans-SemiBold',
-    color: COLORS.darkBrown,
-    fontSize: 9,
-    lineHeight: 10,
-    letterSpacing: -0.18,
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productCategory: {
-    fontFamily: 'JosefinSans-Light',
-    fontSize: 9,
-    lineHeight: 10,
-    color: COLORS.muted,
-    marginBottom: 2,
-  },
-  productName: {
-    fontFamily: 'BodoniModa-SemiBold',
-    fontSize: 15,
-    lineHeight: 18,
-    letterSpacing: -0.3,
-    color: COLORS.darkBrown,
-    marginBottom: 8,
-  },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: {
-    fontFamily: 'JosefinSans-SemiBold',
-    fontSize: 15,
-    lineHeight: 18,
-    letterSpacing: -0.3,
-    color: COLORS.accent,
-  },
-  productRating: {
-    fontFamily: 'JosefinSans-Light',
-    fontSize: 12,
-    color: COLORS.yellow,
   },
 });

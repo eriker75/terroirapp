@@ -4,7 +4,7 @@ import HeaderLayout from '@/components/layouts/HeaderLayout';
 export default function DeseosScreen() {
   return (
     <HeaderLayout>
-      <FavoritosPage showBackButton={false} hideHeader={true} />
+      <FavoritosPage showBackButton={false} hideHeader={false} />
     </HeaderLayout>
   );
 }

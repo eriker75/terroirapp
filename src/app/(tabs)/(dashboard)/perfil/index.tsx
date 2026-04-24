@@ -14,9 +14,10 @@ import {
   MapPin,
   CreditCard,
   Bell,
-  Settings,
   Shield,
   Star,
+  Mail,
+  Settings,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
@@ -48,7 +49,7 @@ const menuSections = [
       { icon: ShoppingBag, label: 'Mis Órdenes', badge: null, route: '/perfil/ordenes' },
       { icon: Heart, label: 'Mis Favoritos', badge: null, route: '/perfil/favoritos' },
       { icon: MapPin, label: 'Mis Direcciones', badge: null, route: '/perfil/direcciones' },
-      { icon: CreditCard, label: 'Mis Tarjetas', badge: null, route: '/perfil/tarjetas' },
+      // { icon: CreditCard, label: 'Mis Tarjetas', badge: null, route: '/perfil/tarjetas' },
     ],
   },
   {
@@ -57,6 +58,7 @@ const menuSections = [
       { icon: Bell, label: 'Notificaciones', badge: null, route: '/notificaciones' },
       { icon: Settings, label: 'Preferencias', badge: null, route: '/perfil/settings' },
       { icon: Shield, label: 'Política de Privacidad', badge: null, route: '/perfil/privacidad' },
+      { icon: Mail, label: 'Contacto', badge: null, route: '/perfil/contacto' },
     ],
   },
 ];

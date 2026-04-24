@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,7 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
       icon: Mail,
       value: true,
     },
+    /*
     {
       id: 'darkMode',
       label: 'Modo oscuro',
@@ -57,11 +58,12 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
     },
     {
       id: 'haptics',
-      label: 'VibraciÃ³n',
-      description: 'Feedback tÃ¡ctil en botones',
+      label: 'Vibración',
+      description: 'Feedback táctil en botones',
       icon: Vibrate,
       value: true,
     },
+    */
   ]);
 
   const [language, setLanguage] = useState<Language>('es');
@@ -74,9 +76,9 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
   };
 
   const handleClearCache = () => {
-    Alert.alert('Limpiar cachÃ©', 'Â¿Limpiar los datos temporales de la app?', [
+    Alert.alert('Limpiar caché', '¿Limpiar los datos temporales de la app?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Limpiar', onPress: () => Alert.alert('Listo', 'CachÃ© eliminada correctamente') },
+      { text: 'Limpiar', onPress: () => Alert.alert('Listo', 'Caché eliminada correctamente') },
     ]);
   };
 
@@ -138,9 +140,9 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
           </View>
         </View>
 
-        {/* Language */}
+        {/* Language & Storage Commented Out
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Idioma y regiÃ³n</Text>
+          <Text style={styles.sectionTitle}>Idioma y región</Text>
           <View style={styles.card}>
             <View style={styles.row}>
               <View style={styles.rowLeft}>
@@ -157,7 +159,7 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
                     onPress={() => setLanguage(lang)}
                   >
                     <Text style={[styles.segBtnText, language === lang && styles.segBtnTextActive]}>
-                      {lang === 'es' ? 'EspaÃ±ol' : 'English'}
+                      {lang === 'es' ? 'Español' : 'English'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -188,13 +190,12 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
           </View>
         </View>
 
-        {/* Storage & Data */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Almacenamiento</Text>
           <View style={styles.card}>
             <View style={styles.row}>
               <View style={styles.rowText}>
-                <Text style={styles.rowLabel}>CachÃ© de la app</Text>
+                <Text style={styles.rowLabel}>Caché de la app</Text>
                 <Text style={styles.rowDesc}>3.2 MB utilizados</Text>
               </View>
               <TouchableOpacity style={styles.outlineBtn} onPress={handleClearCache}>
@@ -203,11 +204,12 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
             </View>
           </View>
         </View>
+        */}
 
         {/* Version info */}
         <View style={styles.versionCard}>
           <Text style={styles.versionText}>Terroir App v1.0.0</Text>
-          <Text style={styles.versionSub}>Todos los derechos reservados Â© 2024</Text>
+          <Text style={styles.versionSub}>Todos los derechos reservados © 2024</Text>
         </View>
       </ScrollView>
     </>

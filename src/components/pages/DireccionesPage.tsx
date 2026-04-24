@@ -67,7 +67,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
 
   const handleSave = () => {
     if (!form.type || !form.address) {
-      Alert.alert('Error', 'El tipo y la direcciÃ³n son obligatorios');
+      Alert.alert('Error', 'El tipo y la dirección son obligatorios');
       return;
     }
     if (editingId !== null) {
@@ -85,7 +85,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
   };
 
   const handleDelete = (id: number) => {
-    Alert.alert('Eliminar direcciÃ³n', 'Â¿EstÃ¡s seguro?', [
+    Alert.alert('Eliminar dirección', '¿Estás seguro?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -131,9 +131,9 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
           <View style={styles.emptyState}>
             <MapPin size={48} color={COLORS.border} />
             <Text style={styles.emptyTitle}>Sin direcciones</Text>
-            <Text style={styles.emptySubtitle}>Agrega una direcciÃ³n para agilizar tus pedidos</Text>
+            <Text style={styles.emptySubtitle}>Agrega una dirección para agilizar tus pedidos</Text>
             <TouchableOpacity style={styles.addEmptyBtn} onPress={openAdd}>
-              <Text style={styles.addEmptyBtnText}>+ Agregar direcciÃ³n</Text>
+              <Text style={styles.addEmptyBtnText}>+ Agregar dirección</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -184,7 +184,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
         {addresses.length > 0 && (
           <TouchableOpacity style={styles.addMoreBtn} onPress={openAdd}>
             <Plus size={16} color={COLORS.accent} />
-            <Text style={styles.addMoreText}>Agregar nueva direcciÃ³n</Text>
+            <Text style={styles.addMoreText}>Agregar nueva dirección</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -196,7 +196,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>
-                {editingId !== null ? 'Editar direcciÃ³n' : 'Nueva direcciÃ³n'}
+                {editingId !== null ? 'Editar dirección' : 'Nueva dirección'}
               </Text>
               <TouchableOpacity onPress={() => setModalOpen(false)}>
                 <X size={22} color={COLORS.darkBrown} />
@@ -215,12 +215,12 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>DirecciÃ³n completa</Text>
+              <Text style={styles.formLabel}>Dirección completa</Text>
               <TextInput
                 style={[styles.formInput, styles.formInputMulti]}
                 value={form.address}
                 onChangeText={(v) => setForm((f) => ({ ...f, address: v }))}
-                placeholder="Calle, nÃºmero, ciudad, estado..."
+                placeholder="Calle, níºmero, ciudad, estado..."
                 placeholderTextColor={COLORS.darkBrown + '60'}
                 multiline
                 numberOfLines={2}
@@ -228,7 +228,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>TelÃ©fono de contacto</Text>
+              <Text style={styles.formLabel}>Teléfono de contacto</Text>
               <TextInput
                 style={styles.formInput}
                 value={form.phone}
@@ -241,7 +241,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
 
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
               <Text style={styles.saveBtnText}>
-                {editingId !== null ? 'Guardar cambios' : 'Agregar direcciÃ³n'}
+                {editingId !== null ? 'Guardar cambios' : 'Agregar dirección'}
               </Text>
             </TouchableOpacity>
           </View>
