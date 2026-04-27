@@ -14,6 +14,7 @@ export default function PerfilLayout() {
         <Stack.Screen name="privacidad" />
         <Stack.Screen name="ordenes" />
         <Stack.Screen name="ordenes/[id]" />
+        <Stack.Screen name="cambiar-password" />
       </Stack>
     </SafeAreaView>
   );

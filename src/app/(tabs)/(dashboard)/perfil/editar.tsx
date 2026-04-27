@@ -134,7 +134,7 @@ export default function EditProfileScreen() {
           {/* Password section */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Seguridad</Text>
-            <TouchableOpacity style={styles.securityRow}>
+            <TouchableOpacity style={styles.securityRow} onPress={() => router.push('/(tabs)/(dashboard)/perfil/cambiar-password' as any)}>
               <View>
                 <Text style={styles.securityLabel}>Cambiar contraseña</Text>
                 <Text style={styles.securityHint}>Última actualización hace 3 meses</Text>
@@ -265,12 +265,12 @@ const styles = StyleSheet.create({
   },
   securityBadgeText: { fontSize: 13, color: COLORS.brown, fontWeight: '600' },
   submitBtn: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: COLORS.darkBrown,
+    paddingVertical: 16,
+    borderRadius: 30,
     alignItems: 'center',
   },
-  submitBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
+  submitBtnText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
   deleteText: {
     textAlign: 'center',
     fontSize: 13,

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -220,10 +220,10 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
                 style={[styles.formInput, styles.formInputMulti]}
                 value={form.address}
                 onChangeText={(v) => setForm((f) => ({ ...f, address: v }))}
-                placeholder="Calle, níºmero, ciudad, estado..."
+                placeholder="Calle, número, ciudad, estado..."
                 placeholderTextColor={COLORS.darkBrown + '60'}
                 multiline
-                numberOfLines={2}
+                numberOfLines={4}
               />
             </View>
 
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   addEmptyBtn: {
     borderWidth: 1,
     borderColor: COLORS.accent,
-    borderRadius: 10,
+    borderRadius: 30,
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginTop: 4,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: COLORS.accent,
-    borderRadius: 12,
+    borderRadius: 30,
     paddingVertical: 14,
   },
   addMoreText: { color: COLORS.accent, fontSize: 14, fontWeight: '600' },
@@ -335,10 +335,10 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: '#00000050' },
   sheet: {
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 40,
     gap: 14,
   },
   sheetHeader: {
@@ -354,19 +354,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightBeige,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 30,
+    paddingHorizontal: 20,
     paddingVertical: 12,
     fontSize: 14,
     color: COLORS.darkBrown,
   },
-  formInputMulti: { minHeight: 64, textAlignVertical: 'top' },
+  formInputMulti: { 
+    minHeight: 100, 
+    textAlignVertical: 'top', 
+    borderRadius: 18,
+    paddingTop: 12 
+  },
   saveBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
   },
   saveBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
 });

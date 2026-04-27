@@ -1,13 +1,12 @@
 import '../../global.css';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { KeyboardAvoidingView, KeyboardProvider } from 'react-native-keyboard-controller';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -89,17 +88,11 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <KeyboardProvider>
             <StatusBar style="dark" />
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={0}
-            >
               <AuthGuard />
               <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(tabs)" />
               </Stack>
-            </KeyboardAvoidingView>
           </KeyboardProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

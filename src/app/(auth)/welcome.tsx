@@ -3,6 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import AppleLogo from '@/assets/svg/AppleLogo.svg';
+import * as Device from 'expo-device';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -57,16 +59,22 @@ export default function WelcomeScreen() {
                 onPress={() => console.log('Google login')}
                 activeOpacity={0.4}
               >
+                <Image
+                  source={require('@/assets/images/GoogleLoginBtnImg.png')}
+                  style={styles.googleIcon}
+                  resizeMode="contain"
+                />
                 <Text style={styles.googleButtonText}>Continuar con Google</Text>
               </TouchableOpacity>
 
-              {Platform.OS === 'ios' && (
+              {(Platform.OS === 'ios' || Device.brand === 'Apple') && (
                 <TouchableOpacity
-                  style={[styles.googleButton, { marginTop: 12, backgroundColor: '#000' }]}
+                  style={[styles.googleButton, { marginTop: 12 }]}
                   onPress={() => console.log('Apple login')}
                   activeOpacity={0.4}
                 >
-                  <Text style={[styles.googleButtonText, { color: COLORS.white }]}>Continuar con Apple</Text>
+                  <AppleLogo width={20} height={20} />
+                  <Text style={styles.googleButtonText}>Continuar con Apple</Text>
                 </TouchableOpacity>
               )}
             </BlurView>
@@ -148,9 +156,10 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontFamily: 'JosefinSans-SemiBold',
     fontSize: 16,
-    lineHeight: 18,
     letterSpacing: -0.3,
     color: COLORS.white,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   secondaryButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
@@ -165,9 +174,10 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontFamily: 'JosefinSans-SemiBold',
     fontSize: 16,
-    lineHeight: 18,
     letterSpacing: -0.3,
     color: COLORS.darkBrown,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   dividerRow: {
     flexDirection: 'row',
@@ -188,10 +198,13 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: COLORS.white,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 30,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
     width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -199,11 +212,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  googleIcon: {
+    width: 20,
+    height: 20,
+  },
   googleButtonText: {
     fontFamily: 'JosefinSans-SemiBold',
     fontSize: 16,
-    lineHeight: 18,
     letterSpacing: -0.3,
     color: COLORS.darkBrown,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
