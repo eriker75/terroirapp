@@ -8,51 +8,82 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react-native';
+import { Eye, EyeOff, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
-import { useRegisterMutation } from '@/services';
-import type { AxiosError } from 'axios';
-import type { ApiError } from '@/types/api.types';
 
-export default function RegisterScreen() {
+export default function RecoveryPasswordScreen() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [validationError, setValidationError] = useState('');
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
-  const { mutate: register, isPending, isError, error } = useRegisterMutation();
-
-  const apiErrorMessage = isError
-    ? ((error as AxiosError<ApiError>)?.response?.data?.message ?? 'Error al crear la cuenta')
-    : '';
-
-  const displayError = validationError || apiErrorMessage;
-
-  const handleRegister = () => {
-    setValidationError('');
-    if (!name || !email || !password || !confirm) {
-      setValidationError('Por favor completa todos los campos');
+  const handleReset = async () => {
+    setError('');
+    if (!code || !password || !confirm) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+    if (code.length < 6) {
+      setError('El código debe tener 6 dígitos');
       return;
     }
     if (password !== confirm) {
-      setValidationError('Las contraseñas no coinciden');
+      setError('Las contraseñas no coinciden');
       return;
     }
     if (password.length < 6) {
-      setValidationError('La contraseña debe tener al menos 6 caracteres');
+      setError('La nueva contraseña debe tener al menos 6 caracteres');
       return;
     }
 
-    const [firstName, ...rest] = name.trim().split(' ');
-    const lastName = rest.join(' ');
-
-    register({ email, password, firstName, lastName });
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setSubmitted(true);
+    } catch {
+      setError('Error al restablecer la contraseña');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (submitted) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push('/login')}>
+            <ArrowLeft size={24} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Contraseña actualizada</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={styles.successContainer}>
+          <View style={styles.successIcon}>
+            <CheckCircle2 size={48} color={COLORS.accent} />
+          </View>
+          <Text style={styles.successTitle}>¡Todo listo!</Text>
+          <Text style={styles.successSubtitle}>
+            Tu contraseña ha sido restablecida correctamente.
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.accentBtn}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={styles.accentBtnText}>Ir a Iniciar Sesión</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -66,48 +97,39 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.registerCard}>
+        <View style={styles.recoveryCard}>
           <View style={styles.cardHeader}>
-            <Text style={styles.brandName}>Crear cuenta</Text>
-            <Text style={styles.brandSubtitle}>Únete a la comunidad Terroir</Text>
+            <Text style={styles.brandName}>Restablecer</Text>
+            <Text style={styles.brandSubtitle}>Crea una nueva contraseña</Text>
           </View>
 
           <View style={styles.cardBody}>
-            {displayError !== '' && (
+            <Text style={styles.introText}>
+              Ingresa el código de 6 dígitos que enviamos a tu correo y tu nueva contraseña.
+            </Text>
+
+            {error !== '' && (
               <View style={styles.errorBox}>
                 <AlertCircle size={18} color={COLORS.red} />
-                <Text style={styles.errorText}>{displayError}</Text>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nombre completo</Text>
+              <Text style={styles.label}>Código de recuperación</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Juan Pérez"
+                placeholder="123456"
                 placeholderTextColor={COLORS.darkBrown + '60'}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                maxLength={6}
               />
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Correo electrónico</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="tu@email.com"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Contraseña</Text>
+              <Text style={styles.label}>Nueva contraseña</Text>
               <View style={styles.passwordRow}>
                 <TextInput
                   style={styles.passwordInput}
@@ -145,32 +167,22 @@ export default function RegisterScreen() {
               )}
             </View>
 
-            <Text style={styles.terms}>
-              Al registrarte aceptas nuestros{' '}
-              <Text style={styles.termsLink}>Términos de Servicio</Text>
-              {' '}y{' '}
-              <Text style={styles.termsLink}>Política de Privacidad</Text>
-            </Text>
-
             <TouchableOpacity
-              style={[styles.submitBtn, isPending && styles.submitBtnDisabled]}
-              onPress={handleRegister}
-              disabled={isPending}
+              style={[styles.accentBtn, isLoading && styles.btnDisabled]}
+              onPress={handleReset}
+              disabled={isLoading}
             >
-              {isPending ? (
+              {isLoading ? (
                 <ActivityIndicator color={COLORS.darkBrown} />
               ) : (
-                <Text style={styles.submitBtnText}>Crear cuenta</Text>
+                <Text style={styles.accentBtnText}>Guardar contraseña</Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.divider} />
-            <View style={styles.loginRow}>
-              <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.loginLink}>Inicia sesión</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => router.push('/login')}>
+              <Text style={styles.loginLink}>Volver a iniciar sesión</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -183,7 +195,7 @@ const styles = StyleSheet.create({
   backBtn: { padding: 20, position: 'absolute', top: 0, left: 0, zIndex: 10 },
   content: { flex: 1 },
   contentContainer: { flexGrow: 1, justifyContent: 'center', padding: 20, paddingBottom: 40 },
-  registerCard: {
+  recoveryCard: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 1,
@@ -204,7 +216,14 @@ const styles = StyleSheet.create({
   },
   brandName: { color: COLORS.white, fontSize: 28, fontWeight: '700', marginBottom: 4 },
   brandSubtitle: { color: COLORS.white + 'CC', fontSize: 14, textAlign: 'center' },
-  cardBody: { padding: 20, gap: 14 },
+  cardBody: { padding: 20, gap: 16 },
+  introText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -246,19 +265,44 @@ const styles = StyleSheet.create({
   },
   eyeBtn: { paddingHorizontal: 14 },
   fieldError: { fontSize: 12, color: COLORS.red },
-  terms: { fontSize: 12, color: COLORS.darkBrown + '80', lineHeight: 18 },
-  termsLink: { color: COLORS.accent, fontWeight: '600' },
-  submitBtn: {
+  accentBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: 'center',
     marginTop: 4,
+    width: '100%',
   },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
+  accentBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
+  btnDisabled: { opacity: 0.6 },
   divider: { borderTopWidth: 1, borderTopColor: COLORS.border, marginVertical: 4 },
-  loginRow: { flexDirection: 'row', justifyContent: 'center' },
-  loginText: { fontSize: 14, color: COLORS.darkBrown + '99' },
-  loginLink: { fontSize: 14, color: COLORS.accent, fontWeight: '600' },
+  loginLink: { textAlign: 'center', fontSize: 14, color: COLORS.accent, fontWeight: '600' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
+  successContainer: {
+    flex: 1,
+    padding: 24,
+    alignItems: 'center',
+    gap: 14,
+    justifyContent: 'center',
+  },
+  successIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: COLORS.accent + '1A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  successTitle: { fontSize: 24, fontWeight: '700', color: COLORS.darkBrown },
+  successSubtitle: { fontSize: 14, color: COLORS.muted, textAlign: 'center' },
 });

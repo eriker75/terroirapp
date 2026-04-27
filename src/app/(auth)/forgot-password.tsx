@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,15 @@ export default function ForgotPasswordScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const handleSubmit = async () => {
     setError('');
@@ -25,12 +34,18 @@ export default function ForgotPasswordScreen() {
       setError('Por favor ingresa un email válido');
       return;
     }
+    
     setIsLoading(true);
     try {
+      // Simulación: Si el email contiene "error", forzamos un fallo para que pruebes el temporizador
+      if (email.includes('error')) {
+        throw new Error('Simulated API Error');
+      }
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setSubmitted(true);
     } catch {
-      setError('Error al procesar tu solicitud');
+      setError('Error al procesar tu solicitud. Intenta más tarde.');
+      setCountdown(30); // Inicia el bloqueo de 30 segundos
     } finally {
       setIsLoading(false);
     }
@@ -123,20 +138,30 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.accentBtn, isLoading && styles.btnDisabled]}
+              style={[styles.accentBtn, (isLoading || countdown > 0) && styles.btnDisabled]}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || countdown > 0}
             >
               {isLoading ? (
                 <ActivityIndicator color={COLORS.darkBrown} />
               ) : (
-                <Text style={styles.accentBtnText}>Enviar instrucciones</Text>
+                <Text style={styles.accentBtnText}>
+                  {countdown > 0 ? `Reintentar en ${countdown}s` : 'Enviar instrucciones'}
+                </Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.divider} />
             <TouchableOpacity onPress={() => router.push('/login')}>
               <Text style={styles.loginLink}>¿Recordaste tu contraseña? Inicia sesión</Text>
+            </TouchableOpacity>
+
+            {/* BOTÓN TEMPORAL PARA PROBAR LA PANTALLA RECOVERY PASSWORD */}
+            <TouchableOpacity 
+              style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.border, borderRadius: 8, alignItems: 'center' }} 
+              onPress={() => router.push('/recovery-password')}
+            >
+              <Text style={{ color: COLORS.darkBrown, fontWeight: 'bold' }}>🧪 Ir a Recovery Password (Test)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -229,7 +254,7 @@ const styles = StyleSheet.create({
   accentBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: 'center',
     marginTop: 4,
     width: '100%',
@@ -287,7 +312,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: 'center',
     width: '100%',
   },

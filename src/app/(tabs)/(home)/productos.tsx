@@ -4,6 +4,7 @@ import { Product, products } from '@/data/products';
 import { useRouter } from 'expo-router';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { ProductCard } from '@/components/ui/ProductCard';
+import { PriceFilterInput } from '@/components/ui/PriceFilterInput';
 import {
   Check,
   Grid3X3,
@@ -25,6 +26,8 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCartStore } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
@@ -43,18 +46,20 @@ const CATALOG: Product[] = Array.from({ length: 40 }, (_, i) => ({
 }));
 
 /* ─── Filters ─────────────────────────────────────────────────────── */
-const FILTERS = [
+const QUICK_FILTERS = [
   { id: 'all',         label: 'Todos' },
   { id: 'coffee',      label: '☕ Café' },
   { id: 'beverages',   label: '🥛 Bebidas' },
   { id: 'accessories', label: '🔧 Accesorios' },
   { id: 'discount',    label: '🏷️ Ofertas' },
-  { id: 'dark',        label: '🔥 Tostado Oscuro' },
-  { id: 'medium',      label: '🌰 Tostado Medio' },
-  { id: 'light',       label: '🌿 Tostado Claro' },
-  { id: 'Etiopía',     label: '🌍 Etiopía' },
-  { id: 'Colombia',    label: '🌎 Colombia' },
-  { id: 'Kenia',       label: '🌍 Kenia' },
+];
+
+const CATEGORIES = [
+  { id: 'all', label: 'Todas' },
+  { id: 'coffee', label: 'Café' },
+  { id: 'beverages', label: 'Bebidas' },
+  { id: 'accessories', label: 'Accesorios' },
+  { id: 'discount', label: 'Ofertas' },
 ];
 
 const SORT_OPTIONS = [
@@ -66,16 +71,49 @@ const SORT_OPTIONS = [
 
 type SortBy = 'newest' | 'price-low' | 'price-high' | 'rating';
 
-function applyFilters(data: Product[], filter: string, search: string, sort: SortBy): Product[] {
+type FilterState = {
+  category: string;
+  minPrice: string;
+  maxPrice: string;
+  minPoints: string;
+  maxPoints: string;
+};
+
+const INITIAL_FILTERS: FilterState = {
+  category: 'all',
+  minPrice: '',
+  maxPrice: '',
+  minPoints: '',
+  maxPoints: '',
+};
+
+function applyFilters(
+  data: Product[],
+  filters: FilterState,
+  search: string,
+  sort: SortBy
+): Product[] {
   let result = data.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    let matchFilter = false;
-    if (filter === 'all')                                                matchFilter = true;
-    else if (['coffee', 'beverages', 'accessories'].includes(filter))   matchFilter = p.category === filter;
-    else if (filter === 'discount')                                      matchFilter = !!p.discount;
-    else if (['dark', 'medium', 'light'].includes(filter))              matchFilter = p.roastLevel === filter;
-    else                                                                 matchFilter = p.origin === filter;
-    return matchSearch && matchFilter;
+    // Search
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+
+    // Category
+    if (filters.category !== 'all') {
+      if (filters.category === 'discount') {
+        if (!p.discount) return false;
+      } else if (p.category !== filters.category) return false;
+    }
+
+    // Price
+    if (filters.minPrice && p.price < parseFloat(filters.minPrice)) return false;
+    if (filters.maxPrice && p.price > parseFloat(filters.maxPrice)) return false;
+
+    // Points (points = price * 10)
+    const pts = Math.floor(p.price * 10);
+    if (filters.minPoints && pts < parseInt(filters.minPoints, 10)) return false;
+    if (filters.maxPoints && pts > parseInt(filters.maxPoints, 10)) return false;
+
+    return true;
   });
 
   if (sort === 'price-low')  result = [...result].sort((a, b) => a.price - b.price);
@@ -90,9 +128,15 @@ export default function ProductsScreen() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [search, setSearch]     = useState('');
-  const [filter, setFilter]     = useState('all');
-  const [sortBy, setSortBy]     = useState<SortBy>('newest');
+
+  const [activeFilters, setActiveFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const [sortBy, setSortBy]               = useState<SortBy>('newest');
+
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const [tempSortBy, setTempSortBy]   = useState<SortBy>('newest');
+  const [filterMode, setFilterMode]   = useState<'usd' | 'pts'>('usd');
+
   const wishlistIds = useWishlistStore((s) => s.wishlistIds);
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
   const addToCartAction = useCartStore((s) => s.addToCart);
@@ -104,14 +148,14 @@ export default function ProductsScreen() {
   const loadingRef = useRef(false); // prevent double-fires
 
   // Derive full filtered list, then slice to current page
-  const allFiltered = applyFilters(CATALOG, filter, search, sortBy);
+  const allFiltered = applyFilters(CATALOG, activeFilters, search, sortBy);
   const visible     = allFiltered.slice(0, page * PAGE_SIZE);
   const hasMore     = visible.length < allFiltered.length;
 
   // Reset pagination whenever filter/search/sort changes
   useEffect(() => {
     setPage(1);
-  }, [filter, search, sortBy]);
+  }, [activeFilters, search, sortBy]);
 
   const loadMore = useCallback(() => {
     if (loadingRef.current || !hasMore) return;
@@ -129,6 +173,23 @@ export default function ProductsScreen() {
     addToCartAction(product);
     setCartAdded((prev) => [...prev, product.id]);
     setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
+  };
+
+  const openFilters = () => {
+    setTempFilters(activeFilters);
+    setTempSortBy(sortBy);
+    setFiltersOpen(true);
+  };
+
+  const applyTempFilters = () => {
+    setActiveFilters(tempFilters);
+    setSortBy(tempSortBy);
+    setFiltersOpen(false);
+  };
+
+  const clearFilters = () => {
+    setTempFilters(INITIAL_FILTERS);
+    setTempSortBy('newest');
   };
 
   /* ── Render helpers ────────────────────────────────────────────── */
@@ -189,7 +250,7 @@ export default function ProductsScreen() {
           <View style={styles.headerRow}>
             <Text style={styles.headerTitle}>Productos</Text>
             <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersOpen(true)}>
+              <TouchableOpacity style={styles.iconBtn} onPress={openFilters}>
                 <Sliders size={20} color={COLORS.darkBrown} />
               </TouchableOpacity>
               <View style={styles.viewToggle}>
@@ -232,13 +293,13 @@ export default function ProductsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.pillsRow}
           >
-            {FILTERS.map((f) => (
+            {QUICK_FILTERS.map((f) => (
               <TouchableOpacity
                 key={f.id}
-                style={[styles.pill, filter === f.id && styles.pillActive]}
-                onPress={() => setFilter(f.id)}
+                style={[styles.pill, activeFilters.category === f.id && styles.pillActive]}
+                onPress={() => setActiveFilters(prev => ({ ...prev, category: f.id }))}
               >
-                <Text style={[styles.pillText, filter === f.id && styles.pillTextActive]}>
+                <Text style={[styles.pillText, activeFilters.category === f.id && styles.pillTextActive]}>
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -289,29 +350,111 @@ export default function ProductsScreen() {
           />
         )}
 
-        {/* Sort Modal */}
+        {/* Filter & Sort Modal */}
         <Modal visible={filtersOpen} transparent animationType="slide">
-          <Pressable style={styles.overlay} onPress={() => setFiltersOpen(false)} />
-          <View style={styles.filterSheet}>
-            <View style={styles.filterHeader}>
-              <Text style={styles.filterTitle}>Ordenar por</Text>
-              <TouchableOpacity onPress={() => setFiltersOpen(false)}>
-                <X size={20} color={COLORS.darkBrown} />
-              </TouchableOpacity>
+          <KeyboardAvoidingView
+            style={styles.overlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <Pressable style={{flex: 1}} onPress={() => setFiltersOpen(false)} />
+            <View style={styles.filterSheet}>
+              <View style={styles.filterHeader}>
+                <Text style={styles.filterTitle}>Filtros y Ordenamiento</Text>
+                <TouchableOpacity style={styles.closeBtn} onPress={() => setFiltersOpen(false)}>
+                  <X size={20} color={COLORS.darkBrown} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.filterScroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                {/* Ordenar por */}
+                <Text style={styles.filterSectionTitle}>Ordenar por</Text>
+                <View style={styles.filterOptionsRow}>
+                  {SORT_OPTIONS.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={[styles.filterChip, tempSortBy === opt.id && styles.filterChipActive]}
+                      onPress={() => setTempSortBy(opt.id as SortBy)}
+                    >
+                      <Text style={[styles.filterChipText, tempSortBy === opt.id && styles.filterChipTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Categoría */}
+                <Text style={styles.filterSectionTitle}>Categoría</Text>
+                <View style={styles.filterOptionsRow}>
+                  {CATEGORIES.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.id}
+                      style={[styles.filterChip, tempFilters.category === opt.id && styles.filterChipActive]}
+                      onPress={() => setTempFilters(prev => ({ ...prev, category: opt.id }))}
+                    >
+                      <Text style={[styles.filterChipText, tempFilters.category === opt.id && styles.filterChipTextActive]}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.filterModeToggle}>
+                  <TouchableOpacity
+                    style={[styles.filterModeBtn, filterMode === 'usd' && styles.filterModeBtnActive]}
+                    onPress={() => setFilterMode('usd')}
+                  >
+                    <Text style={[styles.filterModeText, filterMode === 'usd' && styles.filterModeTextActive]}>Precio ($/Bs)</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.filterModeBtn, filterMode === 'pts' && styles.filterModeBtnActive]}
+                    onPress={() => setFilterMode('pts')}
+                  >
+                    <Text style={[styles.filterModeText, filterMode === 'pts' && styles.filterModeTextActive]}>Puntos</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {filterMode === 'usd' ? (
+                  <View style={styles.filterSection}>
+                    <Text style={styles.filterSectionTitle}>Rango de Precio</Text>
+                    <PriceFilterInput
+                      globalMin={0}
+                      globalMax={200}
+                      prefix="$"
+                      lowValue={tempFilters.minPrice}
+                      highValue={tempFilters.maxPrice}
+                      onValuesChange={(l, h) => setTempFilters(prev => ({...prev, minPrice: l, maxPrice: h}))}
+                    />
+                    {(tempFilters.minPrice || tempFilters.maxPrice) ? (
+                      <Text style={{ fontSize: 12, color: COLORS.muted, marginTop: 4, textAlign: 'center' }}>
+                        Equivalente: Bs {(Number(tempFilters.minPrice || 0) * USD_TO_BS).toFixed(2)} - Bs {(Number(tempFilters.maxPrice || 200) * USD_TO_BS).toFixed(2)}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : (
+                  <View style={styles.filterSection}>
+                    <Text style={styles.filterSectionTitle}>Rango de Puntos</Text>
+                    <PriceFilterInput
+                      globalMin={0}
+                      globalMax={2000}
+                      suffix=" pts"
+                      lowValue={tempFilters.minPoints}
+                      highValue={tempFilters.maxPoints}
+                      onValuesChange={(l, h) => setTempFilters(prev => ({...prev, minPoints: l, maxPoints: h}))}
+                    />
+                  </View>
+                )}
+              </ScrollView>
+
+              <View style={styles.filterFooter}>
+                <TouchableOpacity style={styles.filterBtnOutline} onPress={clearFilters}>
+                  <Text style={styles.filterBtnOutlineText}>Limpiar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.filterBtnSolid} onPress={applyTempFilters}>
+                  <Text style={styles.filterBtnSolidText}>Aplicar Filtros</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            {SORT_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                style={styles.sortOption}
-                onPress={() => { setSortBy(opt.id as SortBy); setFiltersOpen(false); }}
-              >
-                <Text style={[styles.sortOptionText, sortBy === opt.id && styles.sortOptionActive]}>
-                  {opt.label}
-                </Text>
-                {sortBy === opt.id && <Check size={16} color={COLORS.accent} />}
-              </TouchableOpacity>
-            ))}
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </HeaderLayout>
@@ -373,20 +516,55 @@ const styles = StyleSheet.create({
   emptyImage: { width: 220, height: 220 },
   emptyText: { fontSize: 16, color: COLORS.darkBrown, fontWeight: '600', textAlign: 'center' },
   emptySubtext: { fontSize: 13, color: COLORS.muted, textAlign: 'center' },
-  overlay: { flex: 1, backgroundColor: '#00000050' },
+
+  // Filter Modal Styles
+  overlay: { flex: 1, backgroundColor: '#00000050', justifyContent: 'flex-end' },
   filterSheet: {
-    backgroundColor: COLORS.white, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingHorizontal: 20, paddingBottom: 32,
+    backgroundColor: COLORS.white, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: 20, paddingBottom: 32, paddingTop: 8,
+    maxHeight: '85%',
   },
   filterHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: 8,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  filterTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
-  sortOption: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  filterTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
+  closeBtn: { padding: 4 },
+  filterScroll: { marginTop: 8 },
+  filterSectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.darkBrown, marginTop: 16, marginBottom: 12 },
+  filterOptionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  filterChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border,
   },
-  sortOptionText: { fontSize: 15, color: COLORS.darkBrown + '99' },
-  sortOptionActive: { color: COLORS.darkBrown, fontWeight: '600' },
+  filterChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  filterChipText: { fontSize: 13, color: COLORS.darkBrown + '99', fontWeight: '500' },
+  filterChipTextActive: { color: COLORS.darkBrown, fontWeight: '700' },
+  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rangeInput: {
+    flex: 1, height: 44, borderRadius: 12, backgroundColor: COLORS.white,
+    borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 16,
+    color: COLORS.darkBrown, fontSize: 14,
+  },
+  rangeDivider: { fontSize: 16, color: COLORS.muted, fontWeight: '500' },
+  filterFooter: {
+    flexDirection: 'row', gap: 12, marginTop: 20, paddingTop: 16,
+    borderTopWidth: 1, borderTopColor: COLORS.border, marginBottom: 20,
+  },
+  filterBtnOutline: {
+    flex: 1, height: 48, borderRadius: 24, borderWidth: 1, borderColor: COLORS.border,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.white,
+  },
+  filterBtnOutlineText: { color: COLORS.darkBrown, fontSize: 15, fontWeight: '600' },
+  filterBtnSolid: {
+    flex: 1, height: 48, borderRadius: 24, backgroundColor: COLORS.darkBrown,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  filterBtnSolidText: { color: COLORS.white, fontSize: 15, fontWeight: '600' },
+  filterModeToggle: { flexDirection: 'row', backgroundColor: COLORS.lightBeige, borderRadius: 12, padding: 4, marginTop: 16 },
+  filterModeBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  filterModeBtnActive: { backgroundColor: COLORS.white, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+  filterModeText: { fontSize: 14, fontWeight: '600', color: COLORS.muted },
+  filterModeTextActive: { color: COLORS.darkBrown, fontWeight: '700' },
+  filterSection: { marginTop: 4 },
 });

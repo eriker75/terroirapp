@@ -19,7 +19,7 @@ export default function HeaderLayout({ children }: Props) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Image
-          source={require('@/assets/images/logo/terroir-dark-coffe-text.png')}
+          source={require('@/assets/images/logo/terroir-dark-coffee-text.png')}
           style={styles.headerLogo}
           resizeMode="contain"
         />

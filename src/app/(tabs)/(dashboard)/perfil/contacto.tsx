@@ -7,11 +7,14 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, Phone, MapPin, Send } from 'lucide-react-native';
+import { ArrowLeft, Phone, Send, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+
+const PHONE_NUMBER = '584121234567';
 
 export default function ContactoPage() {
   const router = useRouter();
@@ -32,56 +35,42 @@ export default function ContactoPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView style={styles.safeArea} edges={[]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color={COLORS.darkBrown} />
+          <ArrowLeft size={24} color={COLORS.lightBeige} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contacto</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Info Cards */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.sectionTitle}>Nuestra Información</Text>
-          
-          <View style={styles.infoCard}>
-            <View style={styles.iconBox}>
-              <MapPin size={20} color={COLORS.accent} />
-            </View>
-            <View style={styles.infoTexts}>
-              <Text style={styles.infoLabel}>Ubicación</Text>
-              <Text style={styles.infoValue}>Las Mercedes, Caracas, Venezuela</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+      >
+        {/* WhatsApp */}
+        <TouchableOpacity
+          style={styles.contactCard}
+          onPress={() => Linking.openURL(`https://wa.me/${PHONE_NUMBER}`)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.iconBox}>
+            <Phone size={20} color={COLORS.accent} />
+          </View>
+          <View style={styles.contactTexts}>
+            <Text style={styles.columnTitle}>WhatsApp</Text>
+            <View style={styles.linkRow}>
+              <Text style={styles.linkValue}>+58 412 123 4567</Text>
+              <ExternalLink size={11} color={COLORS.accent} />
             </View>
           </View>
-
-          <View style={styles.infoCard}>
-            <View style={styles.iconBox}>
-              <Phone size={20} color={COLORS.accent} />
-            </View>
-            <View style={styles.infoTexts}>
-              <Text style={styles.infoLabel}>Teléfono</Text>
-              <Text style={styles.infoValue}>+58 412 123 4567</Text>
-            </View>
-          </View>
-
-          <View style={styles.infoCard}>
-            <View style={styles.iconBox}>
-              <Mail size={20} color={COLORS.accent} />
-            </View>
-            <View style={styles.infoTexts}>
-              <Text style={styles.infoLabel}>Correo Electrónico</Text>
-              <Text style={styles.infoValue}>hola@terroir.com</Text>
-            </View>
-          </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Form */}
         <View style={styles.formContainer}>
           <Text style={styles.sectionTitle}>Envíanos un mensaje</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Nombre completo</Text>
             <TextInput
@@ -131,29 +120,29 @@ export default function ContactoPage() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
+  safeArea: { flex: 1, backgroundColor: COLORS.darkBrown, paddingTop: 10 },
+  scroll: { flex: 1, backgroundColor: COLORS.lightBeige },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingTop: 14,
+    paddingBottom: 18,
+    backgroundColor: COLORS.darkBrown,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: COLORS.darkBrown },
-  content: { padding: 16, gap: 24, paddingBottom: 32 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown, marginBottom: 4 },
-  infoContainer: { gap: 12 },
-  infoCard: {
+  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.lightBeige },
+  content: { padding: 16, gap: 20, paddingBottom: 40 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown, marginBottom: 4 },
+  contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     backgroundColor: COLORS.white,
-    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
+    padding: 14,
   },
   iconBox: {
     width: 40,
@@ -163,10 +152,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  infoTexts: { flex: 1 },
-  infoLabel: { fontSize: 12, color: COLORS.muted, marginBottom: 2 },
-  infoValue: { fontSize: 14, fontWeight: '600', color: COLORS.darkBrown },
-  formContainer: { gap: 16, backgroundColor: COLORS.white, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  contactTexts: { flex: 1, gap: 2 },
+  columnTitle: { fontSize: 13, fontWeight: '700', color: COLORS.darkBrown },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  linkValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.accent,
+    textDecorationLine: 'underline',
+  },
+  formContainer: {
+    gap: 16,
+    backgroundColor: COLORS.white,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   inputGroup: { gap: 6 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.darkBrown },
   input: {

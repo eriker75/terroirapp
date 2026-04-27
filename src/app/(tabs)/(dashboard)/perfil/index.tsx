@@ -24,19 +24,7 @@ import { COLORS } from '@/constants/colors';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useLogoutMutation } from '@/services';
 
-const LOYALTY_LABELS: Record<string, string> = {
-  bronze: 'Bronze',
-  silver: 'Silver',
-  gold: 'Gold',
-  platinum: 'Platinum',
-};
 
-const LOYALTY_THRESHOLDS: Record<string, { min: number; max: number; next: string | null }> = {
-  bronze: { min: 0, max: 100, next: 'Silver' },
-  silver: { min: 100, max: 250, next: 'Gold' },
-  gold: { min: 250, max: 500, next: 'Platinum' },
-  platinum: { min: 500, max: 500, next: null },
-};
 
 function formatMemberSince(date: string): string {
   return `Miembro desde ${new Date(date).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
@@ -59,6 +47,7 @@ const menuSections = [
       { icon: Settings, label: 'Preferencias', badge: null, route: '/perfil/settings' },
       { icon: Shield, label: 'Política de Privacidad', badge: null, route: '/perfil/privacidad' },
       { icon: Mail, label: 'Contacto', badge: null, route: '/perfil/contacto' },
+      { icon: MapPin, label: 'Ubicación', badge: null, route: '/perfil/ubicacion' },
     ],
   },
 ];
@@ -68,12 +57,7 @@ export default function ProfileScreen() {
   const user = useProfileStore((s) => s.user);
   const { mutate: logout } = useLogoutMutation();
 
-  const level = user?.loyaltyLevel ?? 'bronze';
   const points = user?.loyaltyPoints ?? 0;
-  const threshold = LOYALTY_THRESHOLDS[level];
-  const loyaltyProgress =
-    level === 'platinum' ? 1 : Math.min((points - threshold.min) / (threshold.max - threshold.min), 1);
-  const remainingPoints = level === 'platinum' ? 0 : Math.max(threshold.max - points, 0);
 
   const handleLogout = () => {
     Alert.alert('Cerrar Sesión', '¿Estás seguro de que quieres cerrar sesión?', [
@@ -108,35 +92,10 @@ export default function ProfileScreen() {
 
         {/* Quick Stats */}
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/perfil/ordenes' as any)}>
-            <Text style={styles.statValue}>5</Text>
-            <Text style={styles.statLabel}>Pedidos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.statCard} onPress={() => router.push('/perfil/favoritos' as any)}>
-            <Text style={styles.statValue}>3</Text>
-            <Text style={styles.statLabel}>Favoritos</Text>
-          </TouchableOpacity>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{points}</Text>
-            <Text style={styles.statLabel}>Puntos</Text>
+            <Text style={styles.statLabel}>Mis Puntos</Text>
           </View>
-        </View>
-
-        {/* Loyalty Progress */}
-        <View style={styles.loyaltyCard}>
-          <View style={styles.loyaltyHeader}>
-            <Star size={16} color={COLORS.accent} fill={COLORS.accent} />
-            <Text style={styles.loyaltyTitle}>Nivel {LOYALTY_LABELS[level]}</Text>
-            <Text style={styles.loyaltyPoints}>{points} / {threshold.max} pts</Text>
-          </View>
-          <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${Math.round(loyaltyProgress * 100)}%` }]} />
-          </View>
-          {threshold.next ? (
-            <Text style={styles.loyaltyHint}>{remainingPoints} puntos más para {threshold.next}</Text>
-          ) : (
-            <Text style={styles.loyaltyHint}>¡Nivel máximo alcanzado!</Text>
-          )}
         </View>
 
         {/* Menu Sections */}
@@ -282,47 +241,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.18,
     color: COLORS.muted,
   },
-  loyaltyCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 14,
-    gap: 8,
-  },
-  loyaltyHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  loyaltyTitle: {
-    fontFamily: 'JosefinSans-SemiBold',
-    fontSize: 15,
-    lineHeight: 18,
-    letterSpacing: -0.3,
-    color: COLORS.darkBrown,
-    flex: 1,
-  },
-  loyaltyPoints: {
-    fontFamily: 'JosefinSans-SemiBold',
-    fontSize: 15,
-    lineHeight: 18,
-    letterSpacing: -0.3,
-    color: COLORS.accent,
-  },
-  progressBg: {
-    height: 8,
-    backgroundColor: COLORS.border,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: COLORS.accent,
-    borderRadius: 4,
-  },
-  loyaltyHint: {
-    fontFamily: 'JosefinSans-Light',
-    fontSize: 12,
-    lineHeight: 14,
-    color: COLORS.muted,
-  },
+
   menuSection: { gap: 8 },
   menuSectionTitle: {
     fontFamily: 'JosefinSans-SemiBold',

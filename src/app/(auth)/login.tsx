@@ -48,7 +48,7 @@ export default function LoginScreen() {
         <View style={styles.loginCard}>
           <View style={styles.cardHeader}>
             <Image
-              source={require('@/assets/images/logo/terroir-cream-coffe-text.png')}
+              source={require('@/assets/images/logo/terroir-cream-coffee-text.png')}
               style={styles.brandLogo}
               resizeMode="contain"
             />
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   submitBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 30,
     alignItems: 'center',
     marginTop: 8,
   },
