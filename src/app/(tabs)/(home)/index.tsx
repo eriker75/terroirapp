@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   Image,
+  FlatList,
+  Animated,
+  ScrollView,
 } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -19,14 +21,40 @@ import { useCartStore } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
 
 const { width } = Dimensions.get('window');
+const SLIDE_WIDTH = width - 32;
+const PARALLAX_OFFSET = SLIDE_WIDTH * 0.13;
 
-const banners = [
+// ── Static data – replace with API calls ─────────────────────────────────────
+
+type Banner = {
+  id: string;
+  title: string;
+  subtitle: string;
+  bg: string;
+  image?: any;
+  buttonLabel: string;
+  link: string;
+};
+
+type PromoBanner = {
+  id: string;
+  title: string;
+  subtitle: string;
+  bg: string;
+  image?: any;
+  buttonLabel: string;
+  link: string;
+};
+
+const BANNERS: Banner[] = [
   {
     id: '1',
     title: 'El café que mereces',
     subtitle: 'Especialidad de origen único',
     bg: COLORS.darkBrown,
     image: require('@/assets/images/coffee-banner-1.jpg'),
+    buttonLabel: 'Ver producto',
+    link: '/productos/1',
   },
   {
     id: '2',
@@ -34,6 +62,8 @@ const banners = [
     subtitle: 'Refrescante y vibrante',
     bg: '#473B08',
     image: require('@/assets/images/coffee-banner-2.jpg'),
+    buttonLabel: 'Comprar ahora',
+    link: '/productos/2',
   },
   {
     id: '3',
@@ -41,8 +71,24 @@ const banners = [
     subtitle: 'Kenia, Etiopía, Colombia',
     bg: '#5A2D1E',
     image: require('@/assets/images/coffee-banner-3.jpg'),
+    buttonLabel: 'Explorar',
+    link: '/(tabs)/productos',
   },
 ];
+
+const PROMO_BANNERS: PromoBanner[] = [
+  {
+    id: '1',
+    title: 'Oferta Especial',
+    subtitle: '20% descuento en tu primer pedido',
+    bg: COLORS.darkBrown,
+    image: require('@/assets/images/coffee-banner-promo.jpg'),
+    buttonLabel: 'Comprar ahora',
+    link: '/(tabs)/productos',
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const categories = [
   { id: 'all', name: 'Todos', image: require('@/assets/images/coffee-product-5.jpg') },
@@ -54,20 +100,98 @@ const categories = [
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [currentBanner, setCurrentBanner] = useState(0);
   const [search, setSearch] = useState('');
   const featuredProducts = products.slice(0, 4);
   const addToCart = useCartStore((s) => s.addToCart);
-  
   const wishlistIds = useWishlistStore((s) => s.wishlistIds);
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
-
   const [cartAdded, setCartAdded] = useState<string[]>([]);
+
+  // Banner carousel state
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<FlatList<Banner>>(null);
+  const currentBannerRef = useRef(0);
+  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const handleAddToCart = (product: any) => {
     addToCart(product);
     setCartAdded((prev) => [...prev, product.id]);
     setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
   };
+
+  const advanceBanner = () => {
+    const next = (currentBannerRef.current + 1) % BANNERS.length;
+    flatListRef.current?.scrollToOffset({ offset: next * SLIDE_WIDTH, animated: true });
+    currentBannerRef.current = next;
+  };
+
+  const resetAutoPlay = () => {
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    if (BANNERS.length > 1) {
+      autoPlayRef.current = setInterval(advanceBanner, 4000);
+    }
+  };
+
+  useEffect(() => {
+    resetAutoPlay();
+    return () => {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+    };
+  }, []);
+
+  const onBannerScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    { useNativeDriver: false },
+  );
+
+  const renderBanner = ({ item, index }: { item: Banner; index: number }) => {
+    const inputRange = [
+      (index - 1) * SLIDE_WIDTH,
+      index * SLIDE_WIDTH,
+      (index + 1) * SLIDE_WIDTH,
+    ];
+
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.93, 1, 0.93],
+      extrapolate: 'clamp',
+    });
+
+    // Image shifts opposite to scroll direction, creating parallax depth
+    const imageTranslateX = scrollX.interpolate({
+      inputRange,
+      outputRange: [PARALLAX_OFFSET, 0, -PARALLAX_OFFSET],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <Animated.View style={[styles.bannerSlide, { transform: [{ scale }] }]}>
+        {item.image ? (
+          <Animated.Image
+            source={item.image}
+            style={[styles.bannerImage, { transform: [{ translateX: imageTranslateX }] }]}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: item.bg, borderRadius: 12 }]} />
+        )}
+        {item.image && <View style={styles.bannerOverlay} />}
+        <View style={styles.bannerContent}>
+          <Text style={styles.bannerTitle}>{item.title}</Text>
+          <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+          <TouchableOpacity
+            style={styles.bannerBtn}
+            onPress={() => router.push(item.link as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.bannerBtnText}>{item.buttonLabel}</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const currentPromo = PROMO_BANNERS[0];
 
   return (
     <HeaderLayout>
@@ -87,67 +211,94 @@ export default function HomeScreen() {
 
           {/* Banner Carousel */}
           <View style={styles.bannerContainer}>
-            <ScrollView
+            <FlatList
+              ref={flatListRef}
+              data={BANNERS}
+              keyExtractor={(item) => item.id}
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={onBannerScroll}
               onMomentumScrollEnd={(e) => {
-                const index = Math.round(e.nativeEvent.contentOffset.x / (width - 32));
-                setCurrentBanner(index);
+                const index = Math.round(e.nativeEvent.contentOffset.x / SLIDE_WIDTH);
+                currentBannerRef.current = index;
+                resetAutoPlay();
               }}
-            >
-              {banners.map((banner) => (
-                <View key={banner.id} style={[styles.bannerSlide, { backgroundColor: banner.bg }]}>
-                  <Image source={banner.image} style={styles.bannerImage} resizeMode="cover" />
-                  <View style={styles.bannerOverlay} />
-                  <View style={styles.bannerContent}>
-                    <Text style={styles.bannerTitle}>{banner.title}</Text>
-                    <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
+              getItemLayout={(_, index) => ({
+                length: SLIDE_WIDTH,
+                offset: SLIDE_WIDTH * index,
+                index,
+              })}
+              renderItem={renderBanner}
+            />
+            {/* Animated dots */}
             <View style={styles.dotsContainer}>
-              {banners.map((_, i) => (
-                <View
-                  key={i}
-                  style={[styles.dot, i === currentBanner && styles.dotActive]}
-                />
-              ))}
+              {BANNERS.map((_, i) => {
+                const dotWidth = scrollX.interpolate({
+                  inputRange: [(i - 1) * SLIDE_WIDTH, i * SLIDE_WIDTH, (i + 1) * SLIDE_WIDTH],
+                  outputRange: [6, 18, 6],
+                  extrapolate: 'clamp',
+                });
+                const dotOpacity = scrollX.interpolate({
+                  inputRange: [(i - 1) * SLIDE_WIDTH, i * SLIDE_WIDTH, (i + 1) * SLIDE_WIDTH],
+                  outputRange: [0.35, 1, 0.35],
+                  extrapolate: 'clamp',
+                });
+                return (
+                  <Animated.View
+                    key={i}
+                    style={[styles.dot, { width: dotWidth, opacity: dotOpacity }]}
+                  />
+                );
+              })}
             </View>
           </View>
 
           {/* Promo Banner */}
-          <View style={styles.promoBanner}>
-            <Image
-              source={require('@/assets/images/coffee-banner-promo.jpg')}
-              style={styles.promoBannerBg}
-              resizeMode="cover"
-            />
-            <View style={styles.promoBannerOverlay} />
-            <View style={styles.promoBannerContent}>
-              <View>
-                <Text style={styles.promoTitle}>Oferta Especial</Text>
-                <Text style={styles.promoSubtitle}>20% descuento en tu primer pedido</Text>
+          {currentPromo && (
+            <View style={styles.promoBanner}>
+              {currentPromo.image ? (
+                <Image
+                  source={currentPromo.image}
+                  style={styles.promoBannerBg}
+                  resizeMode="cover"
+                />
+              ) : null}
+              <View
+                style={[
+                  styles.promoBannerOverlay,
+                  !currentPromo.image && { backgroundColor: currentPromo.bg, opacity: 1 },
+                ]}
+              />
+              <View style={styles.promoBannerContent}>
+                <View>
+                  <Text style={styles.promoTitle}>{currentPromo.title}</Text>
+                  <Text style={styles.promoSubtitle}>{currentPromo.subtitle}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.promoBtn}
+                  onPress={() => router.push(currentPromo.link as any)}
+                >
+                  <Text style={styles.promoBtnText}>{currentPromo.buttonLabel}</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.promoBtn}
-                onPress={() => router.push('/(tabs)/productos')}
-              >
-                <Text style={styles.promoBtnText}>Comprar ahora</Text>
-              </TouchableOpacity>
             </View>
-          </View>
+          )}
 
           {/* Categories */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { paddingHorizontal: 16 }]}>Categorías</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoriesRow}
+            >
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   style={styles.categoryCard}
-                  onPress={() => router.push('/(tabs)/productos')}
+                  onPress={() => router.push('/(tabs)/productos' as any)}
                 >
                   <Image source={cat.image} style={styles.categoryImage} resizeMode="cover" />
                   <View style={styles.categoryImageOverlay} />
@@ -161,7 +312,7 @@ export default function HomeScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Destacados</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/productos')}>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/productos' as any)}>
                 <Text style={styles.seeAll}>Ver todo →</Text>
               </TouchableOpacity>
             </View>
@@ -191,11 +342,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.lightBeige,
   },
-  bellBadgeText: {
-    color: COLORS.darkBrown,
-    fontSize: 10,
-    fontWeight: '700',
-  },
   scrollContent: {
     paddingBottom: 24,
   },
@@ -216,29 +362,36 @@ const styles = StyleSheet.create({
     fontFamily: 'JosefinSans-Light',
     flex: 1,
     fontSize: 14,
-    lineHeight: 22,
     color: COLORS.darkBrown,
   },
+
+  // ── Banner carousel ──────────────────────────────────────────────────────
   bannerContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
   },
   bannerSlide: {
-    width: width - 32,
+    width: SLIDE_WIDTH,
+    height: 165,
     borderRadius: 12,
-    minHeight: 130,
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },
   bannerImage: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    width: '100%',
+    top: 0,
+    bottom: 0,
+    // Wider than the slide so translateX has room to shift without gaps
+    left: -PARALLAX_OFFSET,
+    width: SLIDE_WIDTH + PARALLAX_OFFSET * 2,
     height: '100%',
   },
   bannerOverlay: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.40)',
   },
   bannerContent: {
@@ -248,32 +401,46 @@ const styles = StyleSheet.create({
     fontFamily: 'BodoniModa-ExtraBold',
     color: COLORS.white,
     fontSize: 22,
-    lineHeight: 24,
+    lineHeight: 26,
     letterSpacing: -0.44,
   },
   bannerSubtitle: {
     fontFamily: 'JosefinSans-Light',
     color: COLORS.white + 'CC',
     fontSize: 14,
-    lineHeight: 22,
-    marginTop: 4,
+    lineHeight: 20,
+    marginTop: 3,
+  },
+  bannerBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    marginTop: 10,
+  },
+  bannerBtnText: {
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 12,
+    letterSpacing: -0.2,
+    color: COLORS.white,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 6,
     marginTop: 10,
   },
   dot: {
-    width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.border,
-  },
-  dotActive: {
     backgroundColor: COLORS.accent,
-    width: 18,
   },
+
+  // ── Promo banner ─────────────────────────────────────────────────────────
   promoBanner: {
     marginHorizontal: 16,
     marginBottom: 20,
@@ -283,13 +450,19 @@ const styles = StyleSheet.create({
   },
   promoBannerBg: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
   },
   promoBannerOverlay: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: COLORS.darkBrown + 'CC',
   },
   promoBannerContent: {
@@ -326,6 +499,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     letterSpacing: -0.3,
   },
+
+  // ── Sections ─────────────────────────────────────────────────────────────
   section: {
     marginBottom: 20,
   },
@@ -366,13 +541,19 @@ const styles = StyleSheet.create({
   },
   categoryImage: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
   },
   categoryImageOverlay: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.38)',
   },
   categoryName: {
