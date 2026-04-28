@@ -86,6 +86,22 @@ const PROMO_BANNERS: PromoBanner[] = [
     buttonLabel: 'Comprar ahora',
     link: '/(tabs)/productos',
   },
+  {
+    id: '2',
+    title: 'Envío Gratis',
+    subtitle: 'En pedidos mayores a $500',
+    bg: '#473B08',
+    buttonLabel: 'Ver productos',
+    link: '/(tabs)/productos',
+  },
+  {
+    id: '3',
+    title: 'Membresía Terroir',
+    subtitle: 'Acumula puntos en cada compra',
+    bg: '#5A2D1E',
+    buttonLabel: 'Unirme',
+    link: '/(tabs)/productos',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,11 +123,17 @@ export default function HomeScreen() {
   const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
   const [cartAdded, setCartAdded] = useState<string[]>([]);
 
-  // Banner carousel state
+  // Main banner carousel
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList<Banner>>(null);
   const currentBannerRef = useRef(0);
   const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Promo banner carousel
+  const promoScrollX = useRef(new Animated.Value(0)).current;
+  const promoFlatListRef = useRef<FlatList<PromoBanner>>(null);
+  const currentPromoRef = useRef(0);
+  const promoAutoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleAddToCart = (product: any) => {
     addToCart(product);
@@ -119,6 +141,7 @@ export default function HomeScreen() {
     setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
   };
 
+  // Main banner auto-play
   const advanceBanner = () => {
     const next = (currentBannerRef.current + 1) % BANNERS.length;
     flatListRef.current?.scrollToOffset({ offset: next * SLIDE_WIDTH, animated: true });
@@ -132,10 +155,27 @@ export default function HomeScreen() {
     }
   };
 
+  // Promo banner auto-play (offset by 1.5s so they don't advance together)
+  const advancePromoBanner = () => {
+    const next = (currentPromoRef.current + 1) % PROMO_BANNERS.length;
+    promoFlatListRef.current?.scrollToOffset({ offset: next * SLIDE_WIDTH, animated: true });
+    currentPromoRef.current = next;
+  };
+
+  const resetPromoAutoPlay = () => {
+    if (promoAutoPlayRef.current) clearInterval(promoAutoPlayRef.current);
+    if (PROMO_BANNERS.length > 1) {
+      promoAutoPlayRef.current = setInterval(advancePromoBanner, 5000);
+    }
+  };
+
   useEffect(() => {
     resetAutoPlay();
+    const promoDelay = setTimeout(() => resetPromoAutoPlay(), 1500);
     return () => {
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+      if (promoAutoPlayRef.current) clearInterval(promoAutoPlayRef.current);
+      clearTimeout(promoDelay);
     };
   }, []);
 
@@ -191,7 +231,59 @@ export default function HomeScreen() {
     );
   };
 
-  const currentPromo = PROMO_BANNERS[0];
+  const onPromoScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: promoScrollX } } }],
+    { useNativeDriver: false },
+  );
+
+  const renderPromoBanner = ({ item, index }: { item: PromoBanner; index: number }) => {
+    const inputRange = [
+      (index - 1) * SLIDE_WIDTH,
+      index * SLIDE_WIDTH,
+      (index + 1) * SLIDE_WIDTH,
+    ];
+
+    const scale = promoScrollX.interpolate({
+      inputRange,
+      outputRange: [0.93, 1, 0.93],
+      extrapolate: 'clamp',
+    });
+
+    const imageTranslateX = promoScrollX.interpolate({
+      inputRange,
+      outputRange: [PARALLAX_OFFSET, 0, -PARALLAX_OFFSET],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <Animated.View style={[styles.promoBannerSlide, { transform: [{ scale }] }]}>
+        {item.image ? (
+          <Animated.Image
+            source={item.image}
+            style={[styles.promoBannerImage, { transform: [{ translateX: imageTranslateX }] }]}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: item.bg, borderRadius: 12 }]} />
+        )}
+        {item.image && (
+          <View style={[styles.promoBannerOverlay, { backgroundColor: COLORS.darkBrown + 'CC' }]} />
+        )}
+        <View style={styles.promoBannerContent}>
+          <View>
+            <Text style={styles.promoTitle}>{item.title}</Text>
+            <Text style={styles.promoSubtitle}>{item.subtitle}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.promoBtn}
+            onPress={() => router.push(item.link as any)}
+          >
+            <Text style={styles.promoBtnText}>{item.buttonLabel}</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
 
   return (
     <HeaderLayout>
@@ -255,37 +347,6 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Promo Banner */}
-          {currentPromo && (
-            <View style={styles.promoBanner}>
-              {currentPromo.image ? (
-                <Image
-                  source={currentPromo.image}
-                  style={styles.promoBannerBg}
-                  resizeMode="cover"
-                />
-              ) : null}
-              <View
-                style={[
-                  styles.promoBannerOverlay,
-                  !currentPromo.image && { backgroundColor: currentPromo.bg, opacity: 1 },
-                ]}
-              />
-              <View style={styles.promoBannerContent}>
-                <View>
-                  <Text style={styles.promoTitle}>{currentPromo.title}</Text>
-                  <Text style={styles.promoSubtitle}>{currentPromo.subtitle}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.promoBtn}
-                  onPress={() => router.push(currentPromo.link as any)}
-                >
-                  <Text style={styles.promoBtnText}>{currentPromo.buttonLabel}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
           {/* Categories */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { paddingHorizontal: 16 }]}>Categorías</Text>
@@ -306,6 +367,51 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+
+          {/* Promo Banner Carousel */}
+          <View style={styles.promoBannerContainer}>
+            <FlatList
+              ref={promoFlatListRef}
+              data={PROMO_BANNERS}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={onPromoScroll}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / SLIDE_WIDTH);
+                currentPromoRef.current = index;
+                resetPromoAutoPlay();
+              }}
+              getItemLayout={(_, index) => ({
+                length: SLIDE_WIDTH,
+                offset: SLIDE_WIDTH * index,
+                index,
+              })}
+              renderItem={renderPromoBanner}
+            />
+            <View style={styles.dotsContainer}>
+              {PROMO_BANNERS.map((_, i) => {
+                const dotWidth = promoScrollX.interpolate({
+                  inputRange: [(i - 1) * SLIDE_WIDTH, i * SLIDE_WIDTH, (i + 1) * SLIDE_WIDTH],
+                  outputRange: [6, 18, 6],
+                  extrapolate: 'clamp',
+                });
+                const dotOpacity = promoScrollX.interpolate({
+                  inputRange: [(i - 1) * SLIDE_WIDTH, i * SLIDE_WIDTH, (i + 1) * SLIDE_WIDTH],
+                  outputRange: [0.35, 1, 0.35],
+                  extrapolate: 'clamp',
+                });
+                return (
+                  <Animated.View
+                    key={i}
+                    style={[styles.dot, { width: dotWidth, opacity: dotOpacity }]}
+                  />
+                );
+              })}
+            </View>
           </View>
 
           {/* Featured Products */}
@@ -440,21 +546,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
 
-  // ── Promo banner ─────────────────────────────────────────────────────────
-  promoBanner: {
+  // ── Promo banner carousel ─────────────────────────────────────────────────
+  promoBannerContainer: {
     marginHorizontal: 16,
     marginBottom: 20,
+  },
+  promoBannerSlide: {
+    width: SLIDE_WIDTH,
+    height: 82,
     borderRadius: 12,
     overflow: 'hidden',
-    minHeight: 72,
+    justifyContent: 'center',
   },
-  promoBannerBg: {
+  promoBannerImage: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
     bottom: 0,
-    width: '100%',
+    left: -PARALLAX_OFFSET,
+    width: SLIDE_WIDTH + PARALLAX_OFFSET * 2,
     height: '100%',
   },
   promoBannerOverlay: {
