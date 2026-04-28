@@ -8,14 +8,15 @@ import {
   TextInput,
   Alert,
   Modal,
-  KeyboardAvoidingView,
-  Platform,
+  Pressable,
+  Dimensions,
 } from 'react-native';
 import { ArrowLeft, MapPin, CreditCard, ChevronRight, Check, X } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { useCartStore } from '@/store/useCartStore';
+import { MapPicker, LocationResult } from '@/components/blocs/MapPicker';
 
 interface CheckoutProps {
   subtotal?: number;
@@ -44,14 +45,22 @@ export default function CheckoutScreen() {
     }, [])
   );
 
-  const [addresses, setAddresses] = useState([
+  const [addresses, setAddresses] = useState<{
+    id: number;
+    label: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+  }[]>([
     { id: 0, label: 'Casa', address: '4140 Parker Rd., Allentown, NM 31134' },
     { id: 1, label: 'Trabajo', address: '2464 Royal Ln., Mesa, AZ 45463' },
   ]);
-  
+
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newAddress, setNewAddress] = useState('');
+  const [newLatitude, setNewLatitude] = useState<number | undefined>(undefined);
+  const [newLongitude, setNewLongitude] = useState<number | undefined>(undefined);
 
   // In a real app these would come from route params / store
   const subtotal = 23.23;
@@ -62,14 +71,31 @@ export default function CheckoutScreen() {
   const handleAddAddress = () => {
     if (newLabel.trim() && newAddress.trim()) {
       const newId = addresses.length ? Math.max(...addresses.map(a => a.id)) + 1 : 0;
-      setAddresses([...addresses, { id: newId, label: newLabel.trim(), address: newAddress.trim() }]);
+      setAddresses([
+        ...addresses,
+        {
+          id: newId,
+          label: newLabel.trim(),
+          address: newAddress.trim(),
+          latitude: newLatitude,
+          longitude: newLongitude,
+        },
+      ]);
       setSelectedAddress(newId);
       setShowAddressModal(false);
       setNewLabel('');
       setNewAddress('');
+      setNewLatitude(undefined);
+      setNewLongitude(undefined);
     } else {
       Alert.alert('Error', 'Por favor llena la etiqueta y la dirección.');
     }
+  };
+
+  const handleNewLocationSelect = (loc: LocationResult) => {
+    setNewAddress(loc.displayName);
+    setNewLatitude(loc.latitude);
+    setNewLongitude(loc.longitude);
   };
 
   const handlePlaceOrder = () => {
@@ -272,11 +298,14 @@ export default function CheckoutScreen() {
       </View>
 
       {/* Address Modal */}
-      <Modal visible={showAddressModal} transparent animationType="slide">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
+      <Modal
+        visible={showAddressModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAddressModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowAddressModal(false)} />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Nueva Dirección</Text>
@@ -284,8 +313,14 @@ export default function CheckoutScreen() {
                 <X size={24} color={COLORS.darkBrown} />
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.modalBody}>
+
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalBody}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
+            >
               <Text style={styles.modalLabel}>Etiqueta (ej. Casa, Oficina)</Text>
               <TextInput
                 style={styles.modalInput}
@@ -293,23 +328,28 @@ export default function CheckoutScreen() {
                 value={newLabel}
                 onChangeText={setNewLabel}
               />
-              
-              <Text style={styles.modalLabel}>Dirección Completa</Text>
-              <TextInput
-                style={[styles.modalInput, { height: 80 }]}
-                placeholder="Ej. Av. Principal, Edificio X..."
-                value={newAddress}
-                onChangeText={setNewAddress}
-                multiline
-                textAlignVertical="top"
+
+              <Text style={styles.modalLabel}>Ubicación de entrega</Text>
+              <MapPicker
+                countryCode="ve"
+                initialAddress={newAddress}
+                initialLatitude={newLatitude}
+                initialLongitude={newLongitude}
+                onLocationSelect={handleNewLocationSelect}
+                height={260}
               />
-              
+              {newLatitude !== undefined && newLongitude !== undefined && (
+                <Text style={styles.coordsHint}>
+                  Lat: {newLatitude.toFixed(5)} · Lng: {newLongitude.toFixed(5)}
+                </Text>
+              )}
+
               <TouchableOpacity style={styles.modalSaveBtn} onPress={handleAddAddress}>
                 <Text style={styles.modalSaveBtnText}>Guardar Dirección</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
       </View>
     </HeaderLayout>
@@ -419,24 +459,30 @@ const styles = StyleSheet.create({
   placeBtnText: { color: COLORS.darkBrown, fontSize: 16, fontWeight: '700' },
   modalOverlay: {
     flex: 1,
-    backgroundColor: '#00000080',
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#00000080',
   },
   modalContent: {
     backgroundColor: COLORS.lightBeige,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 40,
+    paddingTop: 20,
+    height: Dimensions.get('window').height * 0.85,
   },
+  modalScroll: { paddingHorizontal: 20 },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   modalTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
-  modalBody: { gap: 12 },
+  modalBody: { gap: 12, paddingBottom: 40 },
+  coordsHint: { fontSize: 11, color: COLORS.muted, marginTop: -4, marginLeft: 4 },
   modalLabel: { fontSize: 14, fontWeight: '600', color: COLORS.darkBrown, marginBottom: -6 },
   modalInput: {
     backgroundColor: COLORS.white,

@@ -9,12 +9,14 @@ import {
   Modal,
   Pressable,
   Alert,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
 import { ArrowLeft, MapPin, Phone, Edit2, Plus, X, Trash2, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import { MapPicker, LocationResult } from '@/components/blocs/MapPicker';
 
 interface Address {
   id: number;
@@ -22,6 +24,8 @@ interface Address {
   address: string;
   phone: string;
   default: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 const initialAddresses: Address[] = [
@@ -51,7 +55,13 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ type: '', address: '', phone: '' });
+  const [form, setForm] = useState<{
+    type: string;
+    address: string;
+    phone: string;
+    latitude?: number;
+    longitude?: number;
+  }>({ type: '', address: '', phone: '' });
 
   const openAdd = () => {
     setEditingId(null);
@@ -61,8 +71,23 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
 
   const openEdit = (addr: Address) => {
     setEditingId(addr.id);
-    setForm({ type: addr.type, address: addr.address, phone: addr.phone });
+    setForm({
+      type: addr.type,
+      address: addr.address,
+      phone: addr.phone,
+      latitude: addr.latitude,
+      longitude: addr.longitude,
+    });
     setModalOpen(true);
+  };
+
+  const handleLocationSelect = (loc: LocationResult) => {
+    setForm((f) => ({
+      ...f,
+      address: loc.displayName,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+    }));
   };
 
   const handleSave = () => {
@@ -190,9 +215,9 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
       </ScrollView>
 
       {/* Add/Edit Modal */}
-      <Modal visible={modalOpen} transparent animationType="slide">
-        <Pressable style={styles.overlay} onPress={() => setModalOpen(false)} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Modal visible={modalOpen} transparent animationType="slide" onRequestClose={() => setModalOpen(false)}>
+        <View style={styles.sheetWrapper}>
+          <Pressable style={styles.overlay} onPress={() => { Keyboard.dismiss(); setModalOpen(false); }} />
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>
@@ -203,49 +228,59 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
               </TouchableOpacity>
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Tipo (Casa, Oficina, etc.)</Text>
-              <TextInput
-                style={styles.formInput}
-                value={form.type}
-                onChangeText={(v) => setForm((f) => ({ ...f, type: v }))}
-                placeholder="Casa"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-              />
-            </View>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetContent}
+            >
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Tipo (Casa, Oficina, etc.)</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={form.type}
+                  onChangeText={(v) => setForm((f) => ({ ...f, type: v }))}
+                  placeholder="Casa"
+                  placeholderTextColor={COLORS.darkBrown + '60'}
+                />
+              </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Dirección completa</Text>
-              <TextInput
-                style={[styles.formInput, styles.formInputMulti]}
-                value={form.address}
-                onChangeText={(v) => setForm((f) => ({ ...f, address: v }))}
-                placeholder="Calle, número, ciudad, estado..."
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                multiline
-                numberOfLines={4}
-              />
-            </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Ubicación en el mapa</Text>
+                <MapPicker
+                  countryCode="ve"
+                  initialAddress={form.address}
+                  initialLatitude={form.latitude}
+                  initialLongitude={form.longitude}
+                  onLocationSelect={handleLocationSelect}
+                  height={260}
+                />
+                {form.latitude !== undefined && form.longitude !== undefined && (
+                  <Text style={styles.coordsHint}>
+                    Lat: {form.latitude.toFixed(5)} · Lng: {form.longitude.toFixed(5)}
+                  </Text>
+                )}
+              </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Teléfono de contacto</Text>
-              <TextInput
-                style={styles.formInput}
-                value={form.phone}
-                onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
-                placeholder="(000) 000-0000"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                keyboardType="phone-pad"
-              />
-            </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Teléfono de contacto</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={form.phone}
+                  onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
+                  placeholder="(000) 000-0000"
+                  placeholderTextColor={COLORS.darkBrown + '60'}
+                  keyboardType="phone-pad"
+                />
+              </View>
 
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-              <Text style={styles.saveBtnText}>
-                {editingId !== null ? 'Guardar cambios' : 'Agregar dirección'}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                <Text style={styles.saveBtnText}>
+                  {editingId !== null ? 'Guardar cambios' : 'Agregar dirección'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </View>
   );
@@ -332,20 +367,27 @@ const styles = StyleSheet.create({
   },
   addMoreText: { color: COLORS.accent, fontSize: 14, fontWeight: '600' },
   // Modal
-  overlay: { flex: 1, backgroundColor: '#00000050' },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: '#00000050' },
+  sheetWrapper: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    paddingTop: 20,
+    height: Dimensions.get('window').height * 0.85,
+  },
+  sheetContent: {
+    paddingHorizontal: 24,
     paddingBottom: Platform.OS === 'ios' ? 44 : 40,
     gap: 14,
   },
+  coordsHint: { fontSize: 11, color: COLORS.muted, marginTop: 4, marginLeft: 4 },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    paddingHorizontal: 24,
+    marginBottom: 14,
   },
   sheetTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
   formGroup: { gap: 6 },
