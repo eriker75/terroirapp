@@ -141,7 +141,7 @@ export default function HomeScreen() {
 
           {/* Categories */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Categorías</Text>
+            <Text style={[styles.sectionTitle, { paddingHorizontal: 16 }]}>Categorías</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
               {categories.map((cat) => (
                 <TouchableOpacity
@@ -337,13 +337,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontFamily: 'BodoniModa-SemiBold',
-    fontSize: 17.5,
-    lineHeight: 22,
-    letterSpacing: -0.35,
+    fontFamily: 'JosefinSans-SemiBold',
+    fontSize: 16,
+    lineHeight: 20,
+    letterSpacing: -0.2,
     color: COLORS.darkBrown,
-    paddingHorizontal: 16,
     marginBottom: 12,
+    textAlign: 'left',
   },
   seeAll: {
     fontFamily: 'JosefinSans-SemiBold',

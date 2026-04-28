@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     fontSize: 14,
-    lineHeight: 22,
     color: COLORS.darkBrown,
   },
   passwordRow: {
@@ -239,7 +238,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    lineHeight: 22,
     color: COLORS.darkBrown,
   },
   eyeBtn: { paddingHorizontal: 14 },

@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'BodoniModa-ExtraBold',
     fontSize: 35,
-    lineHeight: 30,
+    lineHeight: 42,
     letterSpacing: -0.7,
     color: COLORS.darkBrown,
   },

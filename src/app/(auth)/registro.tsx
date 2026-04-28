@@ -147,9 +147,13 @@ export default function RegisterScreen() {
 
             <Text style={styles.terms}>
               Al registrarte aceptas nuestros{' '}
-              <Text style={styles.termsLink}>Términos de Servicio</Text>
+              <Text style={styles.termsLink} onPress={() => router.push('/terminos')}>
+                Términos de Servicio
+              </Text>
               {' '}y{' '}
-              <Text style={styles.termsLink}>Política de Privacidad</Text>
+              <Text style={styles.termsLink} onPress={() => router.push('/privacidad')}>
+                Política de Privacidad
+              </Text>
             </Text>
 
             <TouchableOpacity

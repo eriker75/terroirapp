@@ -10,6 +10,8 @@ export default function AuthLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="registro" />
         <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="privacidad" />
+        <Stack.Screen name="terminos" />
       </Stack>
     </SafeAreaView>
   );
