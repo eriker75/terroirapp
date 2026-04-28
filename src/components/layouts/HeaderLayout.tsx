@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNotificationsQuery } from '@/services';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 
 interface Props {
   children: React.ReactNode;
@@ -12,8 +12,7 @@ interface Props {
 
 export default function HeaderLayout({ children }: Props) {
   const router = useRouter();
-  const { data: notifications } = useNotificationsQuery();
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+  const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -67,8 +66,8 @@ const styles = StyleSheet.create({
   },
   bellBadge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
+    top: -6,
+    right: -6,
     backgroundColor: COLORS.accent,
     width: 18,
     height: 18,

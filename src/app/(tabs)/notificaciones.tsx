@@ -5,12 +5,11 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
-import { useNotificationsQuery, useMarkNotificationReadMutation } from '@/services';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -27,25 +26,9 @@ type FilterTab = 'all' | 'unread';
 
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState<FilterTab>('all');
-  const { data: notifications = [], isLoading } = useNotificationsQuery();
-  const { mutate: markRead } = useMarkNotificationReadMutation();
+  const { notifications, unreadCount, markRead, markAllRead } = useNotificationsStore();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
   const displayed = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
-
-  const markAllRead = () => {
-    notifications.filter((n) => !n.read).forEach((n) => markRead(n.id));
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -119,7 +102,6 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.lightBeige },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

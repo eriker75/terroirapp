@@ -219,10 +219,8 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.darkBrown,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     padding: 14,
     alignItems: 'center',
     gap: 4,
@@ -239,7 +237,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 14,
     letterSpacing: -0.18,
-    color: COLORS.muted,
+    color: COLORS.white + 'AA',
   },
 
   menuSection: { gap: 8 },
