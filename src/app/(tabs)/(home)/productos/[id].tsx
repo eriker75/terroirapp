@@ -102,28 +102,50 @@ export default function ProductDetailScreen() {
         </View>
 
         <View style={styles.content}>
-          {/* Category + rating */}
+          {/* Category row */}
           <View style={styles.topRow}>
             <View style={styles.categoryBadge}>
               <Text style={styles.categoryBadgeText}>{categoryLabel}</Text>
-            </View>
-            <View style={styles.pointsBadge}>
-              <Star size={13} color={COLORS.yellow} fill={COLORS.yellow} />
-              <Text style={styles.pointsText}>{points} pts</Text>
             </View>
           </View>
 
           <Text style={styles.productName}>{product.name}</Text>
           <Text style={styles.description}>{product.description}</Text>
 
-          <View style={styles.priceRow}>
-            {hasDiscount && (
-              <Text style={styles.originalPrice}>
-                ${basePrice.toFixed(2)}
-              </Text>
-            )}
-            <Text style={styles.price}>${finalPrice.toFixed(2)}</Text>
-            <Text style={styles.pricebs}>Bs {(finalPrice * USD_TO_BS).toFixed(2)}</Text>
+          {/* Price card */}
+          <View style={styles.priceCard}>
+            <View style={styles.priceCardInner}>
+              <Text style={styles.priceLabel}>PRECIO</Text>
+              <View style={styles.priceMainRow}>
+                <View>
+                  {hasDiscount && (
+                    <Text style={styles.originalPrice}>${basePrice.toFixed(2)}</Text>
+                  )}
+                  <Text style={styles.priceFinal}>${finalPrice.toFixed(2)}</Text>
+                </View>
+                <View style={styles.priceBsBlock}>
+                  <Text style={styles.priceBsApprox}>≈</Text>
+                  <Text style={styles.priceBs}>Bs {(finalPrice * USD_TO_BS).toFixed(2)}</Text>
+                </View>
+                {hasDiscount && (
+                  <View style={styles.savingChip}>
+                    <Text style={styles.savingChipText}>
+                      Ahorra ${(basePrice - finalPrice).toFixed(2)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {/* Points band */}
+            <View style={styles.pointsBand}>
+              <View style={styles.pointsBandIcon}>
+                <Star size={14} color="#92400E" fill="#92400E" />
+              </View>
+              <View style={styles.pointsBandInfo}>
+                <Text style={styles.pointsBandTitle}>Gana {points} puntos</Text>
+                <Text style={styles.pointsBandSub}>al completar esta compra</Text>
+              </View>
+            </View>
           </View>
 
           {/* Tags */}
@@ -258,17 +280,49 @@ const styles = StyleSheet.create({
   },
   heroBadgeText: { color: COLORS.darkBrown, fontSize: 11, fontWeight: '800' },
   content: { paddingHorizontal: 20, marginTop: -20 },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  topRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   categoryBadge: { backgroundColor: COLORS.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
   categoryBadgeText: { fontSize: 11, fontWeight: '600', color: COLORS.darkBrown },
-  pointsBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FEF9C3', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDE68A' },
-  pointsText: { fontSize: 13, fontWeight: '700', color: '#854D0E' },
   productName: { fontSize: 24, fontWeight: '800', color: COLORS.darkBrown, marginBottom: 4, lineHeight: 30 },
   description: { fontSize: 14, color: COLORS.muted, marginBottom: 12 },
-  priceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 14 },
-  price: { fontSize: 26, fontWeight: '800', color: COLORS.accent },
-  originalPrice: { fontSize: 16, color: COLORS.muted, textDecorationLine: 'line-through', marginBottom: 4 },
-  pricebs: { fontSize: 14, fontWeight: '600', color: COLORS.muted, marginBottom: 4 },
+  // Price card
+  priceCard: {
+    backgroundColor: COLORS.white, borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
+    marginBottom: 16, overflow: 'hidden',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
+  },
+  priceCardInner: { padding: 16 },
+  priceLabel: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 2,
+    textTransform: 'uppercase', color: COLORS.muted, marginBottom: 8,
+  },
+  priceMainRow: { flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', gap: 10 },
+  originalPrice: { fontSize: 14, color: COLORS.muted, textDecorationLine: 'line-through', marginBottom: 2 },
+  priceFinal: { fontSize: 34, fontWeight: '800', color: COLORS.accent, lineHeight: 38 },
+  priceBsBlock: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, paddingBottom: 4 },
+  priceBsApprox: { fontSize: 12, color: COLORS.muted },
+  priceBs: { fontSize: 15, fontWeight: '600', color: COLORS.muted },
+  savingChip: {
+    marginLeft: 'auto', alignSelf: 'flex-end',
+    backgroundColor: COLORS.accent, borderRadius: 6,
+    paddingHorizontal: 8, paddingVertical: 4, marginBottom: 2,
+  },
+  savingChipText: { fontSize: 11, fontWeight: '700', color: COLORS.darkBrown },
+  // Points band
+  pointsBand: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: '#FEFCE8',
+    borderTopWidth: 1, borderTopColor: '#FDE68A',
+  },
+  pointsBandIcon: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#FEF08A', alignItems: 'center', justifyContent: 'center',
+  },
+  pointsBandInfo: { flex: 1 },
+  pointsBandTitle: { fontSize: 13, fontWeight: '700', color: '#78350F', lineHeight: 17 },
+  pointsBandSub: { fontSize: 11, color: '#92400E', opacity: 0.7, lineHeight: 15 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   tag: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
