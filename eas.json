@@ -14,18 +14,27 @@
       },
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com"
       }
     },
     "browserstack": {
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com"
       }
     },
     "production": {
       "distribution": "store",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://terroirapp.com"
       }
     }
   }

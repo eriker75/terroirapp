@@ -8,7 +8,17 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "clean:android": "rm -rf android/app/.cxx android/app/build android/build android/.gradle",
+    "build:android:prod": "cd android && EXPO_PUBLIC_BACKEND_URL=https://terroirapp.com ./gradlew bundleRelease",
+    "build:android:staging": "cd android && EXPO_PUBLIC_BACKEND_URL=https://staging.terroirapp.com ./gradlew bundleRelease",
+    "build:android:apk:prod": "cd android && EXPO_PUBLIC_BACKEND_URL=https://terroirapp.com ./gradlew assembleRelease",
+    "build:android:apk:staging": "cd android && EXPO_PUBLIC_BACKEND_URL=https://staging.terroirapp.com ./gradlew assembleRelease",
+    "eas:build:prod": "eas build --profile production --platform all",
+    "eas:build:staging": "eas build --profile preview --platform all",
+    "eas:build:android:prod": "eas build --profile production --platform android",
+    "eas:build:ios:prod": "eas build --profile production --platform ios",
+    "eas:submit:prod": "eas submit --profile production --platform all"
   },
   "dependencies": {
     "@expo-google-fonts/bodoni-moda": "^0.4.2",
