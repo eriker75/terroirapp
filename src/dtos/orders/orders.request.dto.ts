@@ -1,16 +1,32 @@
-import type { OrderStatus } from '@/types/order.types';
-
-export interface CreateOrderItemDto {
+// Payload del checkout público (`POST /api/checkout`). El cliente envía
+// identidad/envío + { productId, quantity } (+ datos de pago opcionales). El
+// servidor calcula precios y total y crea el pedido en estado PENDING.
+export interface CreateCheckoutItemDto {
   productId: string;
   quantity: number;
-  price: number;
 }
 
-export interface CreateOrderRequestDto {
-  userId: string;
-  total: number;
-  items: CreateOrderItemDto[];
+export interface CreateCheckoutRequestDto {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  addressLabel?: string;
+  latitude?: number;
+  longitude?: number;
+  paymentMethod: 'pago_movil' | 'efectivo' | 'puntos' | 'yummy';
+  // Pago móvil
+  bankCode?: string;
+  paymentReference?: string;
+  payerIdDocument?: string;
+  payerName?: string;
+  payerPhone?: string;
   couponId?: string;
-  discount?: number;
-  status?: OrderStatus;
+  notes?: string;
+  items: CreateCheckoutItemDto[];
 }

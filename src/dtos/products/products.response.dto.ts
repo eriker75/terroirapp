@@ -1,5 +1,5 @@
-import type { Product } from '@/types/product.types';
+import type { BackendProduct } from '@/lib/product-mapper';
 import type { PaginatedResponse } from '@/types/api.types';
 
-export type ProductsResponseDto = PaginatedResponse<Product>;
-export type ProductResponseDto = Product;
+export type ProductsResponseDto = PaginatedResponse<BackendProduct>;
+export type ProductResponseDto = BackendProduct;

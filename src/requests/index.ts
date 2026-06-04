@@ -9,3 +9,6 @@ export * from './addresses/addresses.requests';
 export * from './coupons/coupons.requests';
 export * from './banners/banners.requests';
 export * from './notifications/notifications.requests';
+export * from './bcv/bcv.requests';
+export * from './user-settings/user-settings.requests';
+export * from './files/files.requests';

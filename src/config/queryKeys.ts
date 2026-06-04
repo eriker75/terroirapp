@@ -22,11 +22,19 @@ export const QUERY_KEYS = {
   },
   ORDERS: {
     LIST: () => ['orders'] as const,
+    ME: () => ['orders', 'me'] as const,
     DETAIL: (id: string) => ['orders', id] as const,
   },
   ADDRESSES: {
     LIST: () => ['addresses'] as const,
+    USER: (userId: string) => ['addresses', 'user', userId] as const,
     DETAIL: (id: string) => ['addresses', id] as const,
+  },
+  BCV: {
+    RATE: () => ['bcv', 'rate'] as const,
+  },
+  USER_SETTINGS: {
+    GROUP: (userId: string, group: string) => ['user-settings', userId, group] as const,
   },
   COUPONS: {
     LIST: (params?: object) => ['coupons', 'list', params] as const,

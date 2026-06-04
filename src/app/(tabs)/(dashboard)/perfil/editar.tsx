@@ -7,171 +7,232 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft, Mail, Phone, Calendar, Camera, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '@/constants/colors';
+import { useProfileStore } from '@/store/useProfileStore';
+import { useUpdateProfileMutation } from '@/services/auth/auth.service';
+import { useUploadImageMutation } from '@/services/files/files.service';
+import { resolveImageSource } from '@/lib/product-mapper';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types/api.types';
+
+function apiMessage(err: unknown, fallback: string): string {
+  return (err as AxiosError<ApiError>)?.response?.data?.message ?? fallback;
+}
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const [name, setName] = useState('Ronald Richards');
-  const [email, setEmail] = useState('ronald@gmail.com');
-  const [phone, setPhone] = useState('(219) 555-0114');
-  const [birthdate, setBirthdate] = useState('15/03/1990');
-  const [isSaving, setIsSaving] = useState(false);
+  const user = useProfileStore((s) => s.user);
 
-  const handleSave = async () => {
+  const [name, setName] = useState(`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [birthDate, setBirthDate] = useState(user?.birthDate ?? '');
+  const [avatar, setAvatar] = useState<string | undefined>(user?.avatar);
+
+  const { mutate: updateProfile, isPending: isSaving } = useUpdateProfileMutation();
+  const { mutate: uploadImage, isPending: isUploading } = useUploadImageMutation();
+
+  const pickAvatar = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Permiso requerido', 'Permite el acceso a tus fotos para cambiar el avatar.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    uploadImage(
+      {
+        uri: asset.uri,
+        name: asset.fileName ?? `avatar-${user?.id ?? 'me'}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+      },
+      {
+        onSuccess: (data) => setAvatar(data.url),
+        onError: (err) => Alert.alert('Error', apiMessage(err, 'No se pudo subir la imagen.')),
+      },
+    );
+  };
+
+  const handleSave = () => {
     if (!name.trim()) {
       Alert.alert('Error', 'El nombre no puede estar vacío');
       return;
     }
-    setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setIsSaving(false);
-    Alert.alert('¡Listo!', 'Tu perfil fue actualizado correctamente', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    if (!email.trim()) {
+      Alert.alert('Error', 'El correo no puede estar vacío');
+      return;
+    }
+    const [firstName, ...rest] = name.trim().split(' ');
+    const lastName = rest.join(' ');
+
+    updateProfile(
+      {
+        email: email.trim(),
+        firstName,
+        lastName,
+        phone: phone.trim(),
+        birthDate: birthDate.trim() || undefined,
+        avatar: avatar || undefined,
+      },
+      {
+        onSuccess: () =>
+          Alert.alert('¡Listo!', 'Tu perfil fue actualizado correctamente', [
+            { text: 'OK', onPress: () => router.back() },
+          ]),
+        onError: (err) => Alert.alert('Error', apiMessage(err, 'No se pudo actualizar el perfil.')),
+      },
+    );
   };
 
   return (
     <View style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color={COLORS.darkBrown} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Editar Perfil</Text>
-          <TouchableOpacity onPress={handleSave} disabled={isSaving}>
-            <Text style={[styles.saveBtn, isSaving && { opacity: 0.5 }]}>
-              {isSaving ? 'Guardando...' : 'Guardar'}
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <ArrowLeft size={24} color={COLORS.darkBrown} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Editar Perfil</Text>
+        <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+          <Text style={[styles.saveBtn, isSaving && { opacity: 0.5 }]}>
+            {isSaving ? 'Guardando...' : 'Guardar'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Avatar section */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarCircle}>
+              {avatar ? (
+                <Image source={resolveImageSource(avatar)} style={styles.avatarImg} resizeMode="cover" />
+              ) : (
+                <User size={44} color={COLORS.white} />
+              )}
+              {isUploading && (
+                <View style={styles.avatarLoading}>
+                  <ActivityIndicator color={COLORS.white} />
+                </View>
+              )}
+            </View>
+            <TouchableOpacity style={styles.cameraBtn} onPress={pickAvatar} disabled={isUploading}>
+              <Camera size={16} color={COLORS.white} />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={pickAvatar} disabled={isUploading}>
+            <Text style={styles.changePhotoText}>
+              {isUploading ? 'Subiendo…' : 'Cambiar foto de perfil'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
+        {/* Form card */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Información personal</Text>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Nombre completo</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder="Tu nombre"
+              placeholderTextColor={COLORS.darkBrown + '60'}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelRow}>
+              <Mail size={14} color={COLORS.muted} />
+              <Text style={styles.label}>Correo electrónico</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="tu@email.com"
+              placeholderTextColor={COLORS.darkBrown + '60'}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelRow}>
+              <Phone size={14} color={COLORS.muted} />
+              <Text style={styles.label}>Teléfono</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="(000) 000-0000"
+              placeholderTextColor={COLORS.darkBrown + '60'}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <View style={[styles.fieldGroup, { borderBottomWidth: 0 }]}>
+            <View style={styles.labelRow}>
+              <Calendar size={14} color={COLORS.muted} />
+              <Text style={styles.label}>Fecha de nacimiento</Text>
+            </View>
+            <TextInput
+              style={styles.input}
+              value={birthDate}
+              onChangeText={setBirthDate}
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={COLORS.darkBrown + '60'}
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+        </View>
+
+        {/* Password section */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Seguridad</Text>
+          <TouchableOpacity
+            style={styles.securityRow}
+            onPress={() => router.push('/(tabs)/(dashboard)/perfil/cambiar-password' as any)}
+          >
+            <View>
+              <Text style={styles.securityLabel}>Cambiar contraseña</Text>
+              <Text style={styles.securityHint}>Actualiza tu contraseña de acceso</Text>
+            </View>
+            <View style={styles.securityBadge}>
+              <Text style={styles.securityBadgeText}>Cambiar</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Save button */}
+        <TouchableOpacity
+          style={[styles.submitBtn, isSaving && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={isSaving}
         >
-          {/* Avatar section */}
-          <View style={styles.avatarSection}>
-            <View style={styles.avatarWrapper}>
-              <View style={styles.avatarCircle}>
-                <User size={44} color={COLORS.white} />
-              </View>
-              <TouchableOpacity style={styles.cameraBtn}>
-                <Camera size={16} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity>
-              <Text style={styles.changePhotoText}>Cambiar foto de perfil</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Form card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Información personal</Text>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Nombre completo</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Tu nombre"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <View style={styles.labelRow}>
-                <Mail size={14} color={COLORS.muted} />
-                <Text style={styles.label}>Correo electrónico</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="tu@email.com"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <View style={styles.labelRow}>
-                <Phone size={14} color={COLORS.muted} />
-                <Text style={styles.label}>Teléfono</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="(000) 000-0000"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            <View style={[styles.fieldGroup, { borderBottomWidth: 0 }]}>
-              <View style={styles.labelRow}>
-                <Calendar size={14} color={COLORS.muted} />
-                <Text style={styles.label}>Fecha de nacimiento</Text>
-              </View>
-              <TextInput
-                style={styles.input}
-                value={birthdate}
-                onChangeText={setBirthdate}
-                placeholder="DD/MM/AAAA"
-                placeholderTextColor={COLORS.darkBrown + '60'}
-                keyboardType="numbers-and-punctuation"
-              />
-            </View>
-          </View>
-
-          {/* Password section */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Seguridad</Text>
-            <TouchableOpacity style={styles.securityRow} onPress={() => router.push('/(tabs)/(dashboard)/perfil/cambiar-password' as any)}>
-              <View>
-                <Text style={styles.securityLabel}>Cambiar contraseña</Text>
-                <Text style={styles.securityHint}>Última actualización hace 3 meses</Text>
-              </View>
-              <View style={styles.securityBadge}>
-                <Text style={styles.securityBadgeText}>Cambiar</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Save button */}
-          <TouchableOpacity
-            style={[styles.submitBtn, isSaving && { opacity: 0.6 }]}
-            onPress={handleSave}
-            disabled={isSaving}
-          >
-            <Text style={styles.submitBtnText}>
-              {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Delete account */}
-          <TouchableOpacity
-            onPress={() =>
-              Alert.alert(
-                'Eliminar cuenta',
-                '¿Estás seguro? Esta acción es permanente.',
-                [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Eliminar', style: 'destructive', onPress: () => {} },
-                ]
-              )
-            }
-          >
-            <Text style={styles.deleteText}>Eliminar mi cuenta</Text>
-          </TouchableOpacity>
-        </ScrollView>
+          <Text style={styles.submitBtnText}>
+            {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -197,6 +258,14 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 48,
     backgroundColor: COLORS.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: { width: 96, height: 96 },
+  avatarLoading: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#00000040',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -271,11 +340,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitBtnText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
-  deleteText: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: COLORS.red,
-    fontWeight: '500',
-    paddingVertical: 4,
-  },
 });

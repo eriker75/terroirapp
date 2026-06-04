@@ -9,3 +9,6 @@ export * from './addresses/addresses.service';
 export * from './coupons/coupons.service';
 export * from './banners/banners.service';
 export * from './notifications/notifications.service';
+export * from './bcv/bcv.service';
+export * from './user-settings/user-settings.service';
+export * from './files/files.service';

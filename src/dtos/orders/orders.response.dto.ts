@@ -1,5 +1,4 @@
-import type { Order } from '@/types/order.types';
-import type { PaginatedResponse } from '@/types/api.types';
+import type { BackendOrder } from '@/types/order.types';
 
-export type OrderResponseDto = Order;
-export type OrdersResponseDto = PaginatedResponse<Order>;
+export type OrderResponseDto = BackendOrder;
+export type OrdersResponseDto = BackendOrder[];

@@ -3,60 +3,85 @@ import type { AxiosError } from 'axios';
 import {
   getWishlistRequest,
   addWishlistItemRequest,
-  replaceWishlistItemsRequest,
   removeWishlistItemRequest,
+  replaceWishlistRequest,
+  type WishlistSnapshot,
 } from '@/requests/wishlist/wishlist.requests';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useWishlistStore } from '@/store/useWishlistStore';
 import { QUERY_KEYS } from '@/config/queryKeys';
-import type { AddWishlistItemRequestDto, ReplaceWishlistItemsRequestDto } from '@/dtos/wishlist/wishlist.request.dto';
-import type { WishlistResponseDto } from '@/dtos/wishlist/wishlist.response.dto';
 
-function useWishlistKey() {
-  const userId = useProfileStore((s) => s.user?.id ?? '');
-  return QUERY_KEYS.WISHLIST.USER(userId);
+function setStoreIds(ids: string[]) {
+  useWishlistStore.setState({ wishlistIds: ids, wishlistCount: ids.length });
 }
 
+/**
+ * Trae la wishlist del servidor y la fusiona con la local (invitado): la unión
+ * de ids. Si el local aportó ids nuevos, persiste la unión en BD para no perder
+ * lo agregado antes de autenticarse. Sincroniza el store y devuelve el snapshot
+ * (ids + productos completos) para renderizar las ProductCard. Corre una vez por
+ * sesión (no resucita ids borrados en cada focus).
+ */
 export function useWishlistQuery() {
   const userId = useProfileStore((s) => s.user?.id);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  return useQuery<WishlistResponseDto, AxiosError>({
+  return useQuery<WishlistSnapshot, AxiosError>({
     queryKey: QUERY_KEYS.WISHLIST.USER(userId ?? ''),
-    queryFn: () => getWishlistRequest(userId!),
+    queryFn: async () => {
+      const local = useWishlistStore.getState().wishlistIds;
+      const remote = await getWishlistRequest(userId!);
+      const union = Array.from(new Set([...remote.ids, ...local]));
+
+      let snapshot = remote;
+      if (union.length !== remote.ids.length) {
+        snapshot = await replaceWishlistRequest(userId!, union);
+      }
+      setStoreIds(snapshot.ids);
+      return snapshot;
+    },
     enabled: isAuthenticated && !!userId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 }
 
 export function useAddWishlistItemMutation() {
   const queryClient = useQueryClient();
-  const wishlistKey = useWishlistKey();
   const userId = useProfileStore((s) => s.user?.id ?? '');
 
-  return useMutation<WishlistResponseDto, AxiosError, AddWishlistItemRequestDto>({
-    mutationFn: (dto) => addWishlistItemRequest(userId, dto),
-    onSuccess: (data) => queryClient.setQueryData(wishlistKey, data),
-  });
-}
-
-export function useReplaceWishlistItemsMutation() {
-  const queryClient = useQueryClient();
-  const wishlistKey = useWishlistKey();
-  const userId = useProfileStore((s) => s.user?.id ?? '');
-
-  return useMutation<WishlistResponseDto, AxiosError, ReplaceWishlistItemsRequestDto>({
-    mutationFn: (dto) => replaceWishlistItemsRequest(userId, dto),
-    onSuccess: (data) => queryClient.setQueryData(wishlistKey, data),
+  return useMutation<WishlistSnapshot, AxiosError, string>({
+    mutationFn: (productId) => addWishlistItemRequest(userId, productId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.WISHLIST.USER(userId), data);
+      setStoreIds(data.ids);
+    },
   });
 }
 
 export function useRemoveWishlistItemMutation() {
   const queryClient = useQueryClient();
-  const wishlistKey = useWishlistKey();
   const userId = useProfileStore((s) => s.user?.id ?? '');
 
-  return useMutation<WishlistResponseDto, AxiosError, string>({
+  return useMutation<WishlistSnapshot, AxiosError, string>({
     mutationFn: (productId) => removeWishlistItemRequest(userId, productId),
-    onSuccess: (data) => queryClient.setQueryData(wishlistKey, data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.WISHLIST.USER(userId), data);
+      setStoreIds(data.ids);
+    },
+  });
+}
+
+export function useReplaceWishlistMutation() {
+  const queryClient = useQueryClient();
+  const userId = useProfileStore((s) => s.user?.id ?? '');
+
+  return useMutation<WishlistSnapshot, AxiosError, string[]>({
+    mutationFn: (ids) => replaceWishlistRequest(userId, ids),
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.WISHLIST.USER(userId), data);
+      setStoreIds(data.ids);
+    },
   });
 }

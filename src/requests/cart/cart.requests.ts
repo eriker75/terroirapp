@@ -1,84 +1,55 @@
 import { api } from '@/config/api';
-import type {
-  AddToCartRequestDto,
-  UpdateCartItemRequestDto,
-  ReplaceCartItemsRequestDto,
-  ApplyCouponRequestDto,
-} from '@/dtos/cart/cart.request.dto';
-import type { CartResponseDto } from '@/dtos/cart/cart.response.dto';
+import { mapApiProductToCard, type BackendProduct } from '@/lib/product-mapper';
+import type { CartItem } from '@/store/useCartStore';
+
+// El carrito persistente en BD existe para usuarios autenticados. El store local
+// (AsyncStorage) es la fuente de verdad de la UI; estas requests lo sincronizan
+// con el backend (traer al login, reemplazar en cada cambio, vaciar).
+
+interface BackendCartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  product: BackendProduct;
+}
+
+interface BackendCart {
+  id: string;
+  userId: string;
+  couponId: string | null;
+  items: BackendCartItem[];
+}
+
+function mapCartItems(cart: BackendCart): CartItem[] {
+  return (cart.items ?? []).map((it) => ({
+    product: mapApiProductToCard(it.product),
+    quantity: it.quantity,
+  }));
+}
+
+/**
+ * Consolida líneas por producto sumando cantidades. Evita violar el unique
+ * (cartId, productId) del backend al reemplazar todos los ítems.
+ */
+function consolidate(items: CartItem[]): Array<{ productId: string; quantity: number }> {
+  const byId = new Map<string, number>();
+  for (const i of items) {
+    if (i.quantity > 0) {
+      byId.set(i.product.id, (byId.get(i.product.id) ?? 0) + i.quantity);
+    }
+  }
+  return [...byId.entries()].map(([productId, quantity]) => ({ productId, quantity }));
+}
 
 const base = (userId: string) => `/cart/user/${userId}`;
 
-let mockState: CartResponseDto = {
-  id: 'cart_123',
-  userId: 'user_123',
-  items: [
-    {
-      id: 'cart_item_1',
-      cartId: 'cart_123',
-      productId: 'prod_1',
-      quantity: 2,
-      product: {
-        id: 'prod_1',
-        slug: 'cafe-origen-colombia',
-        name: 'Café de Origen - Colombia',
-        description: 'Delicioso café con notas a cacao y frutos rojos.',
-        price: 15.99,
-        stock: 50,
-        status: 'active',
-        images: ['https://via.placeholder.com/150'],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        categoryId: 'cat_1',
-      } as any
-    }
-  ],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
+export const getCartRequest = (userId: string): Promise<CartItem[]> =>
+  api.get<BackendCart>(base(userId)).then((r) => mapCartItems(r.data));
 
-export const getCartRequest = (userId: string): Promise<CartResponseDto> =>
-  new Promise((res) => setTimeout(() => res(mockState), 500));
-
-export const addToCartRequest = (userId: string, dto: AddToCartRequestDto): Promise<CartResponseDto> =>
-  new Promise((res) => setTimeout(() => res(mockState), 500));
-
-export const updateCartItemRequest = (userId: string, productId: string, dto: UpdateCartItemRequestDto): Promise<CartResponseDto> =>
-  new Promise((res) => {
-    setTimeout(() => {
-      mockState = {
-        ...mockState,
-        items: mockState.items.map(i => i.productId === productId ? { ...i, quantity: dto.quantity } : i)
-      };
-      res(mockState);
-    }, 500);
-  });
-
-export const replaceCartItemsRequest = (userId: string, dto: ReplaceCartItemsRequestDto): Promise<CartResponseDto> =>
-  new Promise((res) => setTimeout(() => res(mockState), 500));
-
-export const removeCartItemRequest = (userId: string, productId: string): Promise<CartResponseDto> =>
-  new Promise((res) => {
-    setTimeout(() => {
-      mockState = {
-        ...mockState,
-        items: mockState.items.filter(i => i.productId !== productId)
-      };
-      res(mockState);
-    }, 500);
-  });
+export const replaceCartRequest = (userId: string, items: CartItem[]): Promise<CartItem[]> =>
+  api
+    .patch<BackendCart>(`${base(userId)}/items`, { items: consolidate(items) })
+    .then((r) => mapCartItems(r.data));
 
 export const clearCartRequest = (userId: string): Promise<void> =>
-  new Promise((res) => {
-    setTimeout(() => {
-      mockState = { ...mockState, items: [] };
-      res();
-    }, 500);
-  });
-
-export const applyCouponRequest = (userId: string, dto: ApplyCouponRequestDto): Promise<CartResponseDto> =>
-  new Promise((res) => setTimeout(() => res(mockState), 500));
-
-export const removeCouponRequest = (userId: string): Promise<CartResponseDto> =>
-  new Promise((res) => setTimeout(() => res(mockState), 500));
-
+  api.delete(`${base(userId)}/items`).then(() => undefined);

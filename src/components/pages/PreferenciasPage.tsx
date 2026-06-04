@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,17 +12,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Bell, Mail, Globe, DollarSign, Moon, Vibrate } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
-
-interface ToggleSetting {
-  id: string;
-  label: string;
-  description: string;
-  icon: React.FC<{ size: number; color: string }>;
-  value: boolean;
-}
+import {
+  useNotificationSettingsQuery,
+  useUpsertNotificationSettingsMutation,
+  NOTIFICATIONS_GROUP,
+  NOTIF_KEYS,
+} from '@/services/user-settings/user-settings.service';
+import type { UserSetting } from '@/requests/user-settings/user-settings.requests';
 
 type Language = 'es' | 'en';
 type Currency = 'USD' | 'EUR' | 'MXN';
+
+// Toggles de notificación: comparten group key (NOTIFICATIONS_GROUP), distintas keys.
+const NOTIF_TOGGLES = [
+  { key: NOTIF_KEYS.push, label: 'Notificaciones push', description: 'Ofertas, pedidos y novedades', icon: Bell },
+  { key: NOTIF_KEYS.email, label: 'Notificaciones por email', description: 'Recibe el resumen semanal', icon: Mail },
+];
+
+// Lee un setting booleano; por defecto ON si el usuario aún no lo configuró.
+function getSettingBool(settings: UserSetting[], key: string, def = true): boolean {
+  const s = settings.find((x) => x.metaKey === key);
+  return s ? s.metaValue === 'true' : def;
+}
 
 interface Props {
   showBackButton?: boolean;
@@ -33,46 +44,31 @@ interface Props {
 export default function PreferenciasPage({ showBackButton = false, onBack, useSafeArea = true }: Props) {
   const router = useRouter();
 
-  const [toggles, setToggles] = useState<ToggleSetting[]>([
-    {
-      id: 'push',
-      label: 'Notificaciones push',
-      description: 'Ofertas, pedidos y novedades',
-      icon: Bell,
-      value: true,
-    },
-    {
-      id: 'email',
-      label: 'Notificaciones por email',
-      description: 'Recibe el resumen semanal',
-      icon: Mail,
-      value: true,
-    },
-    /*
-    {
-      id: 'darkMode',
-      label: 'Modo oscuro',
-      description: 'Tema oscuro en la app',
-      icon: Moon,
-      value: false,
-    },
-    {
-      id: 'haptics',
-      label: 'Vibración',
-      description: 'Feedback táctil en botones',
-      icon: Vibrate,
-      value: true,
-    },
-    */
-  ]);
+  // Settings de notificaciones desde el backend (mismo group, distintas keys).
+  const { data: notifSettings } = useNotificationSettingsQuery();
+  const { mutate: upsertNotif } = useUpsertNotificationSettingsMutation();
+
+  const [values, setValues] = useState<Record<string, boolean>>({
+    [NOTIF_KEYS.push]: true,
+    [NOTIF_KEYS.email]: true,
+  });
+
+  // Sincroniza con el servidor cuando carga (default ON si no hay registro).
+  useEffect(() => {
+    if (!notifSettings) return;
+    setValues({
+      [NOTIF_KEYS.push]: getSettingBool(notifSettings, NOTIF_KEYS.push),
+      [NOTIF_KEYS.email]: getSettingBool(notifSettings, NOTIF_KEYS.email),
+    });
+  }, [notifSettings]);
 
   const [language, setLanguage] = useState<Language>('es');
   const [currency, setCurrency] = useState<Currency>('USD');
 
-  const toggleSetting = (id: string) => {
-    setToggles((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, value: !t.value } : t))
-    );
+  const toggleSetting = (key: string) => {
+    const next = !values[key];
+    setValues((prev) => ({ ...prev, [key]: next })); // optimista
+    upsertNotif([{ metaKey: key, metaValue: String(next), metaGroup: NOTIFICATIONS_GROUP }]);
   };
 
   const handleClearCache = () => {
@@ -110,12 +106,13 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Notificaciones y pantalla</Text>
           <View style={styles.card}>
-            {toggles.map((setting, index) => {
+            {NOTIF_TOGGLES.map((setting, index) => {
               const Icon = setting.icon;
-              const isLast = index === toggles.length - 1;
+              const isLast = index === NOTIF_TOGGLES.length - 1;
+              const value = values[setting.key];
               return (
                 <View
-                  key={setting.id}
+                  key={setting.key}
                   style={[styles.row, !isLast && styles.rowBorder]}
                 >
                   <View style={styles.rowLeft}>
@@ -128,10 +125,10 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
                     </View>
                   </View>
                   <Switch
-                    value={setting.value}
-                    onValueChange={() => toggleSetting(setting.id)}
+                    value={value}
+                    onValueChange={() => toggleSetting(setting.key)}
                     trackColor={{ false: COLORS.border, true: COLORS.accent + 'AA' }}
-                    thumbColor={setting.value ? COLORS.accent : COLORS.white}
+                    thumbColor={value ? COLORS.accent : COLORS.white}
                     ios_backgroundColor={COLORS.border}
                   />
                 </View>
@@ -209,7 +206,7 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
         {/* Version info */}
         <View style={styles.versionCard}>
           <Text style={styles.versionText}>Terroir App v1.0.0</Text>
-          <Text style={styles.versionSub}>Todos los derechos reservados © 2024</Text>
+          <Text style={styles.versionSub}>Todos los derechos reservados © {new Date().getFullYear()}</Text>
         </View>
       </ScrollView>
     </>

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Image,
 } from 'react-native';
 import {
   ChevronRight,
@@ -23,6 +24,7 @@ import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useLogoutMutation } from '@/services';
+import { resolveImageSource } from '@/lib/product-mapper';
 
 
 
@@ -76,7 +78,11 @@ export default function ProfileScreen() {
         {/* Avatar Card */}
         <View style={styles.avatarCard}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>☕</Text>
+            {user?.avatar ? (
+              <Image source={resolveImageSource(user.avatar)} style={styles.avatarImg} resizeMode="cover" />
+            ) : (
+              <Text style={styles.avatarEmoji}>☕</Text>
+            )}
           </View>
           <Text style={styles.userName}>
             {user ? `${user.firstName} ${user.lastName}` : '—'}
@@ -178,7 +184,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    overflow: 'hidden',
   },
+  avatarImg: { width: 88, height: 88 },
   avatarEmoji: { fontSize: 44 },
   userName: {
     fontFamily: 'BodoniModa-SemiBold',

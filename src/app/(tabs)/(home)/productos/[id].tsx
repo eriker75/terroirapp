@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,15 @@ import {
   StyleSheet,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft, Heart, ShoppingCart, Star, MapPin, Flame, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
-import { products } from '@/data/products';
 import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
+import { useWishlist } from '@/hooks';
+import { useProductQuery, useProductsQuery } from '@/services';
+import { mapApiProductToCard, mapApiProductsToCards } from '@/lib/product-mapper';
 
 const { width } = Dimensions.get('window');
 
@@ -26,15 +28,41 @@ const ROAST_LABELS: Record<string, string> = {
 export default function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const product = products.find((p) => p.id === id);
+  const { data: apiProduct, isLoading } = useProductQuery(id);
+  const { data: catalog } = useProductsQuery({ limit: 20 });
   const addToCartAction = useCartStore((s) => s.addToCart);
-  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
-  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+  const { wishlistIds, toggleWishlist } = useWishlist();
 
   const [addedToCart, setAddedToCart] = useState(false);
   const [qty, setQty] = useState(1);
 
+  const product = useMemo(
+    () => (apiProduct ? mapApiProductToCard(apiProduct) : undefined),
+    [apiProduct],
+  );
+
   const inWishlist = product ? wishlistIds.includes(product.id) : false;
+
+  // Relacionados: misma categoría, excluyendo el producto actual.
+  const upsells = useMemo(() => {
+    if (!product) return [];
+    return mapApiProductsToCards(catalog?.data ?? [])
+      .filter((p) => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+  }, [catalog, product]);
+
+  if (isLoading && !product) {
+    return (
+      <View style={styles.safeArea}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <ArrowLeft size={22} color={COLORS.darkBrown} />
+        </TouchableOpacity>
+        <View style={styles.notFound}>
+          <ActivityIndicator size="large" color={COLORS.accent} />
+        </View>
+      </View>
+    );
+  }
 
   if (!product) {
     return (
@@ -48,10 +76,6 @@ export default function ProductDetailScreen() {
       </View>
     );
   }
-
-  const upsells = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
 
   const handleAddToCart = () => {
     addToCartAction(product, qty);

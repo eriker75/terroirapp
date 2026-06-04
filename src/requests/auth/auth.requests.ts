@@ -1,104 +1,114 @@
 import { api } from '@/config/api';
-import type { LoginRequestDto, RegisterRequestDto, UpdateProfileRequestDto } from '@/dtos/auth/auth.request.dto';
+import type {
+  LoginRequestDto,
+  RegisterRequestDto,
+  UpdateProfileRequestDto,
+} from '@/dtos/auth/auth.request.dto';
 import type { AuthResponseDto } from '@/dtos/auth/auth.response.dto';
-import type { UserProfile } from '@/types/auth.types';
+import type { AccountType, UserProfile, UserRole, UserStatus } from '@/types/auth.types';
 
-export const loginRequest = (dto: LoginRequestDto): Promise<AuthResponseDto> => {
-  console.log(`[Mock Frontend] Simulando login para:`, dto.email);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        accessToken: 'mock_token_123',
-        user: {
-          id: 'user_123',
-          email: dto.email,
-          firstName: 'Usuario',
-          lastName: 'Demo',
-          role: 'customer',
-          status: 'active',
-          loyaltyLevel: 'silver',
-          loyaltyPoints: 120,
-          memberSince: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          phone: '',
-          address: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: ''
-        },
-      });
-    }, 1000);
-  });
-};
+const nowIso = () => new Date().toISOString();
 
-export const registerRequest = (dto: RegisterRequestDto): Promise<AuthResponseDto> => {
-  console.log(`[Mock Frontend] Simulando registro para:`, dto.email);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        accessToken: 'mock_token_123',
-        user: {
-          id: 'user_123',
-          email: dto.email,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          role: 'customer',
-          status: 'active',
-          loyaltyLevel: 'bronze',
-          loyaltyPoints: 0,
-          memberSince: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          phone: '04120327469',
-          address: 'Av Intercomunal el valle',
-          city: 'Caracas',
-          state: 'Distrito Capital',
-          zip: '1041',
-          country: 'Venezuela'
-        },
-      });
-    }, 1000);
-  });
-};
+// ── Shapes del backend NestJS ────────────────────────────────────────────────
+// El backend devuelve el usuario "plano" (campos al nivel raíz). login/register/
+// refresh añaden accessToken + refreshToken al mismo objeto.
+export interface BackendUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  status?: string;
+  accountType?: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  avatar?: string | null;
+  birthDate?: string | null;
+  loyaltyPoints?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-export const getProfileRequest = (id: string): Promise<UserProfile> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        email: 'demo@terroir.com',
-        firstName: 'Usuario',
-        lastName: 'Demo',
-        role: 'customer',
-        status: 'active',
-        loyaltyLevel: 'silver',
-        loyaltyPoints: 120,
-        memberSince: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }, 500);
-  });
-};
+export interface BackendAuthResponse extends BackendUser {
+  accessToken: string;
+  refreshToken: string;
+}
 
-export const updateProfileRequest = (id: string, dto: UpdateProfileRequestDto): Promise<UserProfile> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id,
-        email: dto.email || 'demo@terroir.com',
-        firstName: dto.firstName || 'Usuario',
-        lastName: dto.lastName || 'Demo',
-        role: 'customer',
-        status: 'active',
-        loyaltyLevel: 'silver',
-        loyaltyPoints: 120,
-        memberSince: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }, 1000);
-  });
-};
+/** Mapea el usuario plano del backend al UserProfile que usa la app. */
+export function mapBackendUser(u: BackendUser): UserProfile {
+  return {
+    id: u.id,
+    email: u.email,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    role: (u.role as UserRole) ?? 'customer',
+    status: (u.status as UserStatus) ?? 'active',
+    accountType: (u.accountType as AccountType) ?? 'B2C',
+    // El backend puede devolver null o, en login/refresh, omitir estos campos.
+    // Los normalizamos a string vacío para mantener el contrato de UserProfile.
+    phone: u.phone ?? '',
+    address: u.address ?? '',
+    city: u.city ?? '',
+    state: u.state ?? '',
+    zip: u.zip ?? '',
+    country: u.country ?? '',
+    avatar: u.avatar ?? undefined,
+    birthDate: u.birthDate ?? undefined,
+    loyaltyPoints: u.loyaltyPoints ?? 0,
+    createdAt: u.createdAt ?? nowIso(),
+    updatedAt: u.updatedAt ?? nowIso(),
+  };
+}
+
+function toAuthResponse(d: BackendAuthResponse): AuthResponseDto {
+  return {
+    accessToken: d.accessToken,
+    refreshToken: d.refreshToken,
+    user: mapBackendUser(d),
+  };
+}
+
+// ── Auth real contra el backend ──────────────────────────────────────────────
+
+export const loginRequest = (dto: LoginRequestDto): Promise<AuthResponseDto> =>
+  api
+    .post<BackendAuthResponse>('/users/login', { email: dto.email, password: dto.password })
+    .then((r) => toAuthResponse(r.data));
+
+export const registerRequest = (dto: RegisterRequestDto): Promise<AuthResponseDto> =>
+  api
+    .post<BackendAuthResponse>('/users/register', {
+      email: dto.email,
+      password: dto.password,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      // El backend exige estos campos (acepta string vacío si aún no se capturan).
+      phone: dto.phone ?? '',
+      address: dto.address ?? '',
+      city: dto.city ?? '',
+      state: dto.state ?? '',
+      zip: dto.zip ?? '',
+      // country y avatar son opcionales: solo se envían si vienen (forbidNonWhitelisted).
+      ...(dto.country ? { country: dto.country } : {}),
+      ...(dto.avatar ? { avatar: dto.avatar } : {}),
+    })
+    .then((r) => toAuthResponse(r.data));
+
+export const getProfileRequest = (id: string): Promise<UserProfile> =>
+  api.get<BackendUser>(`/users/${id}`).then((r) => mapBackendUser(r.data));
+
+export const updateProfileRequest = (
+  id: string,
+  dto: UpdateProfileRequestDto,
+): Promise<UserProfile> =>
+  api.patch<BackendUser>(`/users/${id}`, dto).then((r) => mapBackendUser(r.data));
+
+export const changePasswordRequest = (
+  userId: string,
+  dto: { currentPassword: string; newPassword: string },
+): Promise<{ success: true }> =>
+  api.post<{ success: true }>(`/users/${userId}/change-password`, dto).then((r) => r.data);

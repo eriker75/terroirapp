@@ -4,11 +4,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/colors';
 import { useCartStore } from '@/store/useCartStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
+import { useStoreSync } from '@/hooks';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const cartCount = useCartStore((s) => s.cartCount);
   const wishlistCount = useWishlistStore((s) => s.wishlistCount);
+
+  // Sincroniza carrito y wishlist con el backend mientras hay sesión
+  // (merge al entrar + push del carrito con debounce).
+  useStoreSync();
 
   return (
     <Tabs

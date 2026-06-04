@@ -14,15 +14,12 @@ import { ArrowLeft, Heart, ShoppingBag, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useRef } from 'react';
 import { COLORS } from '@/constants/colors';
-import { products } from '@/data/products';
 import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
+import { useWishlist } from '@/hooks';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 44) / 2;
-
-const initialFavorites = ['1', '2', '5', '7', '10'];
 
 interface Props {
   showBackButton?: boolean;
@@ -34,25 +31,23 @@ export default function FavoritosPage({ showBackButton = false, onBack, hideHead
   const router = useRouter();
   
   const addToCartAction = useCartStore((s) => s.addToCart);
-  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
-  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
-  const clearWishlist = useWishlistStore((s) => s.clearWishlist);
-  
+  const { wishlistProducts, toggleWishlist, clearWishlist } = useWishlist();
+
   const [cartAdded, setCartAdded] = useState<string[]>([]);
-  
+
   // Pagination
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const loadingRef = useRef(false);
   const PAGE_SIZE = 8;
-  
+
   const handleAddToCart = (product: any) => {
     addToCartAction(product);
     setCartAdded((prev) => [...prev, product.id]);
     setTimeout(() => setCartAdded((prev) => prev.filter((x) => x !== product.id)), 1500);
   };
 
-  const favoriteProducts = products.filter((p) => wishlistIds.includes(p.id));
+  const favoriteProducts = wishlistProducts;
   const visible = favoriteProducts.slice(0, page * PAGE_SIZE);
   const hasMore = visible.length < favoriteProducts.length;
 
@@ -92,7 +87,7 @@ export default function FavoritosPage({ showBackButton = false, onBack, hideHead
             <View style={{ width: 24 }} />
           )}
           <Text style={styles.headerTitle}>Mis Favoritos</Text>
-          {wishlistIds.length > 0 ? (
+          {favoriteProducts.length > 0 ? (
             <TouchableOpacity onPress={clearAll}>
               <Trash2 size={20} color={COLORS.red} />
             </TouchableOpacity>
@@ -103,10 +98,10 @@ export default function FavoritosPage({ showBackButton = false, onBack, hideHead
       )}
 
       {/* Count */}
-      {wishlistIds.length > 0 && (
+      {favoriteProducts.length > 0 && (
         <View style={styles.countRow}>
           <Heart size={14} color={COLORS.accent} fill={COLORS.accent} />
-          <Text style={styles.countText}>{wishlistIds.length} productos guardados</Text>
+          <Text style={styles.countText}>{favoriteProducts.length} productos guardados</Text>
         </View>
       )}
 

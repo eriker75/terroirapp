@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,15 +10,21 @@ import {
   FlatList,
   Animated,
   ScrollView,
+  ActivityIndicator,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
 } from 'react-native';
 import { Search } from 'lucide-react-native';
+
+const DESTACADOS_PAGE_SIZE = 6;
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
-import { products } from '@/data/products';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
+import { useWishlist } from '@/hooks';
+import { useProductsQuery, useCategoriesQuery } from '@/services';
+import { mapApiProductsToCards, resolveImageSource } from '@/lib/product-mapper';
 
 const { width } = Dimensions.get('window');
 const SLIDE_WIDTH = width - 32;
@@ -106,21 +112,42 @@ const PROMO_BANNERS: PromoBanner[] = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const categories = [
-  { id: 'all', name: 'Todos', image: require('@/assets/images/coffee-product-5.jpg') },
-  { id: 'espresso', name: 'Espresso', image: require('@/assets/images/espresso.jpg') },
-  { id: 'cappuccino', name: 'Cappuccino', image: require('@/assets/images/cappuccino.jpg') },
-  { id: 'latte', name: 'Latte', image: require('@/assets/images/product-latte.jpg') },
-  { id: 'cold-brew', name: 'Cold Brew', image: require('@/assets/images/cold-brew.jpg') },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const featuredProducts = products.slice(0, 4);
+  // Productos destacados (tag "destacados"). La sección se muestra solo si hay ≥1.
+  const { data: destacadosData } = useProductsQuery({ tag: 'destacados', limit: 50 });
+  const destacados = useMemo(
+    () => mapApiProductsToCards(destacadosData?.data ?? []),
+    [destacadosData],
+  );
+  // Scroll infinito (client-side) sobre el set traído, como en la pág. de productos.
+  const [destacadosVisible, setDestacadosVisible] = useState(DESTACADOS_PAGE_SIZE);
+  useEffect(() => setDestacadosVisible(DESTACADOS_PAGE_SIZE), [destacados.length]);
+  const visibleDestacados = destacados.slice(0, destacadosVisible);
+  const hasMoreDestacados = destacadosVisible < destacados.length;
+
+  const handleHomeScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!hasMoreDestacados) return;
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 220) {
+      setDestacadosVisible((c) => Math.min(c + DESTACADOS_PAGE_SIZE, destacados.length));
+    }
+  };
+
+  // Categorías dinámicas desde el backend (nombre + imagen).
+  const { data: categoriesData } = useCategoriesQuery();
+  const categories = useMemo(
+    () =>
+      (categoriesData?.data ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        image: resolveImageSource(c.image),
+      })),
+    [categoriesData],
+  );
   const addToCart = useCartStore((s) => s.addToCart);
-  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
-  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+  const { wishlistIds, toggleWishlist } = useWishlist();
   const [cartAdded, setCartAdded] = useState<string[]>([]);
 
   // Main banner carousel
@@ -288,7 +315,12 @@ export default function HomeScreen() {
   return (
     <HeaderLayout>
       <View style={styles.safeArea}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          onScroll={handleHomeScroll}
+          scrollEventThrottle={400}
+        >
           {/* Search */}
           <View style={styles.searchContainer}>
             <Search size={18} color={COLORS.darkBrown + '80'} />
@@ -414,29 +446,36 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Featured Products */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Destacados</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/productos' as any)}>
-                <Text style={styles.seeAll}>Ver todo →</Text>
-              </TouchableOpacity>
+          {/* Destacados — solo si hay al menos un producto con tag "destacados" */}
+          {destacados.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Destacados</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/productos' as any)}>
+                  <Text style={styles.seeAll}>Ver todo →</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.productsGrid}>
+                {visibleDestacados.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    variant="grid"
+                    inWishlist={wishlistIds.includes(product.id)}
+                    inCart={cartAdded.includes(product.id)}
+                    onToggleWishlist={() => toggleWishlist(product.id)}
+                    onAddToCart={() => handleAddToCart(product)}
+                    onPress={() => router.push(`/productos/${product.id}` as any)}
+                  />
+                ))}
+              </View>
+              {hasMoreDestacados && (
+                <View style={{ alignItems: 'center', paddingTop: 14 }}>
+                  <ActivityIndicator size="small" color={COLORS.accent} />
+                </View>
+              )}
             </View>
-            <View style={styles.productsGrid}>
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  variant="grid"
-                  inWishlist={wishlistIds.includes(product.id)}
-                  inCart={cartAdded.includes(product.id)}
-                  onToggleWishlist={() => toggleWishlist(product.id)}
-                  onAddToCart={() => handleAddToCart(product)}
-                  onPress={() => router.push(`/productos/${product.id}` as any)}
-                />
-              ))}
-            </View>
-          </View>
+          )}
         </ScrollView>
       </View>
     </HeaderLayout>

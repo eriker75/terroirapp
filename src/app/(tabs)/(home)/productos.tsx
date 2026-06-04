@@ -1,6 +1,8 @@
 import { VStack } from '@/components/ui/vstack';
 import { COLORS } from '@/constants/colors';
-import { Product, products } from '@/data/products';
+import type { Product } from '@/data/products';
+import { useProductsQuery } from '@/services';
+import { mapApiProductsToCards } from '@/lib/product-mapper';
 import { useRouter } from 'expo-router';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { ProductCard } from '@/components/ui/ProductCard';
@@ -12,7 +14,7 @@ import {
   Search,
   Sliders, X,
 } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -20,6 +22,7 @@ import {
   Image,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,20 +33,11 @@ import {
   Platform,
 } from 'react-native';
 import { useCartStore } from '@/store/useCartStore';
-import { useWishlistStore } from '@/store/useWishlistStore';
+import { useWishlist } from '@/hooks';
 
 const { width } = Dimensions.get('window');
 const PAGE_SIZE = 10;
 const USD_TO_BS = 6.96; // tasa de cambio USD → Bs
-
-/* ─── Mock catalog: 40 items cycling through the 12 real products ─── */
-const CATALOG: Product[] = Array.from({ length: 40 }, (_, i) => ({
-  ...products[i % products.length],
-  id: String(i + 1),
-  price: parseFloat(
-    (products[i % products.length].price * (1 + Math.floor(i / products.length) * 0.04)).toFixed(2)
-  ),
-}));
 
 /* ─── Filters ─────────────────────────────────────────────────────── */
 const QUICK_FILTERS = [
@@ -137,15 +131,25 @@ export default function ProductsScreen() {
   const [tempSortBy, setTempSortBy]   = useState<SortBy>('newest');
   const [filterMode, setFilterMode]   = useState<'usd' | 'pts'>('usd');
 
-  const wishlistIds = useWishlistStore((s) => s.wishlistIds);
-  const toggleWishlist = useWishlistStore((s) => s.toggleWishlist);
+  const { wishlistIds, toggleWishlist } = useWishlist();
   const addToCartAction = useCartStore((s) => s.addToCart);
   const [cartAdded, setCartAdded] = useState<string[]>([]);
 
-  // Pagination state
-  const [page, setPage]         = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const loadingRef = useRef(false); // prevent double-fires
+  // Catálogo real desde el backend. Al ir autenticado, el interceptor adjunta el
+  // token y el backend modula la visibilidad (B2B/B2C). Traemos un lote amplio y
+  // filtramos/paginamos en cliente para conservar la UX instantánea.
+  const { data, isLoading, isError, refetch, isRefetching } = useProductsQuery({
+    limit: 100,
+    sort: 'newest',
+  });
+
+  const CATALOG = useMemo(
+    () => mapApiProductsToCards(data?.data ?? []),
+    [data],
+  );
+
+  // Pagination state (client-side sobre el catálogo ya traído)
+  const [page, setPage] = useState(1);
 
   // Derive full filtered list, then slice to current page
   const allFiltered = applyFilters(CATALOG, activeFilters, search, sortBy);
@@ -158,15 +162,7 @@ export default function ProductsScreen() {
   }, [activeFilters, search, sortBy]);
 
   const loadMore = useCallback(() => {
-    if (loadingRef.current || !hasMore) return;
-    loadingRef.current = true;
-    setIsLoading(true);
-    // Simulate network delay (800–1200 ms)
-    setTimeout(() => {
-      setPage((p) => p + 1);
-      setIsLoading(false);
-      loadingRef.current = false;
-    }, 1000);
+    if (hasMore) setPage((p) => p + 1);
   }, [hasMore]);
 
   const addToCart = (product: Product) => {
@@ -219,15 +215,19 @@ export default function ProductsScreen() {
 
   const ListFooter = () => (
     <View style={styles.footer}>
-      {isLoading ? (
-        <View style={styles.loaderBox}>
-          <ActivityIndicator size="small" color={COLORS.accent} />
-          <Text style={styles.loaderText}>Cargando más productos…</Text>
-        </View>
-      ) : !hasMore && visible.length > 0 ? (
+      {!hasMore && visible.length > 0 ? (
         <Text style={styles.endText}>— Has visto todos los productos —</Text>
       ) : null}
     </View>
+  );
+
+  const refreshControl = (
+    <RefreshControl
+      refreshing={isRefetching}
+      onRefresh={refetch}
+      tintColor={COLORS.accent}
+      colors={[COLORS.accent]}
+    />
   );
 
   const EmptyState = () => (
@@ -319,8 +319,26 @@ export default function ProductsScreen() {
           </View>
         </VStack>
 
-        {/* FlatList — key forces remount when columns change */}
-        {viewMode === 'grid' ? (
+        {/* Estado de carga / error / catálogo */}
+        {isLoading ? (
+          <View style={styles.centerFill}>
+            <ActivityIndicator size="large" color={COLORS.accent} />
+            <Text style={styles.loaderText}>Cargando productos…</Text>
+          </View>
+        ) : isError ? (
+          <View style={styles.centerFill}>
+            <Image
+              source={require('@/assets/images/404Coffe.png')}
+              style={styles.emptyImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.emptyText}>No pudimos cargar los productos</Text>
+            <Text style={styles.emptySubtext}>Revisa tu conexión e inténtalo de nuevo</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()}>
+              <Text style={styles.retryBtnText}>Reintentar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : viewMode === 'grid' ? (
           <FlatList
             key="grid"
             data={visible}
@@ -334,6 +352,7 @@ export default function ProductsScreen() {
             ListFooterComponent={ListFooter}
             ListEmptyComponent={EmptyState}
             showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
           />
         ) : (
           <FlatList
@@ -347,6 +366,7 @@ export default function ProductsScreen() {
             ListFooterComponent={ListFooter}
             ListEmptyComponent={EmptyState}
             showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
           />
         )}
 
@@ -505,6 +525,21 @@ const styles = StyleSheet.create({
   loaderBox: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   loaderText: { fontSize: 13, color: COLORS.muted },
   endText: { fontSize: 12, color: COLORS.muted + '99', fontStyle: 'italic' },
+  centerFill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  retryBtn: {
+    marginTop: 12,
+    backgroundColor: COLORS.darkBrown,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  retryBtnText: { color: COLORS.white, fontSize: 15, fontWeight: '600' },
   emptyState: {
     flex: 1,
     alignItems: 'center',

@@ -23,6 +23,7 @@ export interface UpdateProfileRequestDto {
   lastName?: string;
   phone?: string;
   avatar?: string;
+  birthDate?: string;
   address?: string;
   city?: string;
   state?: string;

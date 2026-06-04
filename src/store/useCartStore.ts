@@ -16,6 +16,12 @@ interface CartStore {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  /**
+   * Fusiona el carrito del servidor con el local (tras el login) para no perder
+   * lo agregado como invitado. Para líneas que coinciden (mismo producto) gana
+   * la mayor cantidad; el resto se agrega.
+   */
+  mergeServerCart: (serverItems: CartItem[]) => void;
 }
 
 function computeCartState(items: CartItem[]) {
@@ -61,6 +67,24 @@ export const useCartStore = create<CartStore>()(
         }),
 
       clearCart: () => set({ items: [], cartCount: 0, cartTotal: 0 }),
+
+      mergeServerCart: (serverItems) =>
+        set((state) => {
+          if (!serverItems || serverItems.length === 0) return state;
+          const merged = [...state.items];
+          for (const remote of serverItems) {
+            const idx = merged.findIndex((i) => i.product.id === remote.product.id);
+            if (idx === -1) {
+              merged.push(remote);
+            } else {
+              merged[idx] = {
+                ...merged[idx],
+                quantity: Math.max(merged[idx].quantity, remote.quantity),
+              };
+            }
+          }
+          return computeCartState(merged);
+        }),
     }),
     {
       name: 'terroir-cart',

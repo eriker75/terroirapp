@@ -11,6 +11,9 @@ import {
 import { ArrowLeft, Eye, EyeOff, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import { useChangePasswordMutation } from '@/services/auth/auth.service';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types/api.types';
 
 interface PasswordFieldProps {
   label: string;
@@ -54,9 +57,9 @@ export default function ChangePasswordScreen() {
   const [current, setCurrent]   = useState('');
   const [next, setNext]         = useState('');
   const [confirm, setConfirm]   = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const { mutate: changePassword, isPending: isSaving } = useChangePasswordMutation();
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!current.trim()) {
       Alert.alert('Error', 'Ingresa tu contraseña actual.');
       return;
@@ -70,14 +73,21 @@ export default function ChangePasswordScreen() {
       return;
     }
 
-    setIsSaving(true);
-    // TODO: conectar con el servicio de autenticación real
-    await new Promise((r) => setTimeout(r, 900));
-    setIsSaving(false);
-
-    Alert.alert('¡Listo!', 'Tu contraseña fue actualizada correctamente.', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    changePassword(
+      { currentPassword: current, newPassword: next },
+      {
+        onSuccess: () =>
+          Alert.alert('¡Listo!', 'Tu contraseña fue actualizada correctamente.', [
+            { text: 'OK', onPress: () => router.back() },
+          ]),
+        onError: (err) =>
+          Alert.alert(
+            'Error',
+            (err as AxiosError<ApiError>)?.response?.data?.message ??
+              'No se pudo cambiar la contraseña.',
+          ),
+      },
+    );
   };
 
   return (
