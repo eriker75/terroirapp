@@ -119,8 +119,8 @@ export default function CheckoutScreen() {
   // ── Totales (del carrito real; el backend recalcula de forma autoritativa) ──
   const subtotal = cartTotal;
   const discount = 0;
-  const shipping = 0;
-  const total = subtotal - discount + shipping;
+  // Envío descartado (no se cobra): el total es subtotal − descuento.
+  const total = subtotal - discount;
 
   const loyaltyPoints = user?.loyaltyPoints ?? 0;
   const totalInPoints = total * USD_TO_POINTS;
@@ -412,10 +412,6 @@ export default function CheckoutScreen() {
                 </View>
               )}
               <View style={[styles.summaryRow, styles.summaryRowBorder]}>
-                <Text style={styles.summaryLabel}>Envío</Text>
-                <Text style={styles.summaryValue}>{shipping === 0 ? 'Gratis' : formatAmount(shipping, paymentMethod, bcvRate)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>Total</Text>
                 <Text style={styles.totalValue}>{formatAmount(total, paymentMethod, bcvRate)}</Text>
               </View>

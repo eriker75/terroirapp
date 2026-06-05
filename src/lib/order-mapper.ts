@@ -93,13 +93,15 @@ const num = (v: string | number | null | undefined): number => {
 export function mapOrder(o: BackendOrder): OrderView {
   const items: OrderItemView[] = (o.items ?? []).map((it) => {
     const unitPrice = num(it.price);
+    // quantity llega como string (Decimal de Prisma) en productos por peso; coercionar.
+    const quantity = num(it.quantity);
     return {
       id: it.id,
       productId: it.productId,
       name: it.product?.name ?? 'Producto',
-      quantity: it.quantity,
+      quantity,
       unitPrice,
-      lineTotal: unitPrice * it.quantity,
+      lineTotal: unitPrice * quantity,
       image: resolveProductImageSource(it.product?.mainImage, it.product?.images),
     };
   });

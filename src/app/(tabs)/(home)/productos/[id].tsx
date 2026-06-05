@@ -14,8 +14,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { useCartStore } from '@/store/useCartStore';
 import { useWishlist } from '@/hooks';
-import { useProductQuery, useProductsQuery } from '@/services';
-import { mapApiProductToCard, mapApiProductsToCards } from '@/lib/product-mapper';
+import { useProductQuery } from '@/services';
+import { mapApiProductToCard } from '@/lib/product-mapper';
 
 const { width } = Dimensions.get('window');
 
@@ -29,7 +29,6 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: apiProduct, isLoading } = useProductQuery(id);
-  const { data: catalog } = useProductsQuery({ limit: 20 });
   const addToCartAction = useCartStore((s) => s.addToCart);
   const { wishlistIds, toggleWishlist } = useWishlist();
 
@@ -43,13 +42,23 @@ export default function ProductDetailScreen() {
 
   const inWishlist = product ? wishlistIds.includes(product.id) : false;
 
-  // Relacionados: misma categoría, excluyendo el producto actual.
+  // Productos similares = upsells + cross-sells configurados por el admin (venta
+  // cruzada). SIN fallback por categoría: refleja exactamente lo que se configuró;
+  // si no hay relaciones, la sección no aparece.
   const upsells = useMemo(() => {
     if (!product) return [];
-    return mapApiProductsToCards(catalog?.data ?? [])
-      .filter((p) => p.category === product.category && p.id !== product.id)
-      .slice(0, 4);
-  }, [catalog, product]);
+    return (product.relatedProducts ?? [])
+      .map((r) => r.related)
+      .filter((r): r is NonNullable<typeof r> => !!r)
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        price: r.price,
+        image: r.image,
+        discount: undefined as number | undefined,
+      }))
+      .slice(0, 8);
+  }, [product]);
 
   if (isLoading && !product) {
     return (
@@ -146,6 +155,9 @@ export default function ProductDetailScreen() {
                     <Text style={styles.originalPrice}>${basePrice.toFixed(2)}</Text>
                   )}
                   <Text style={styles.priceFinal}>${finalPrice.toFixed(2)}</Text>
+                  {product.weightLabel && (
+                    <Text style={styles.originalPrice}>Tamaño: {product.weightLabel}</Text>
+                  )}
                 </View>
                 <View style={styles.priceBsBlock}>
                   <Text style={styles.priceBsApprox}>≈</Text>
@@ -236,7 +248,7 @@ export default function ProductDetailScreen() {
           {/* Upsells */}
           {upsells.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>También te puede gustar</Text>
+              <Text style={styles.sectionTitle}>Productos similares</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}

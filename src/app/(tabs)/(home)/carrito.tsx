@@ -48,8 +48,8 @@ export default function CartScreen() {
 
   const discountAmount = appliedCoupon ? (cartTotal * (appliedCoupon.amount / 100)) : 0;
   const tax = cartItems.length > 0 ? (cartTotal - discountAmount) * 0.1 : 0;
-  const shipping = cartItems.length > 0 ? 3.0 : 0;
-  const total = (cartTotal - discountAmount) + tax + shipping;
+  // Envío descartado (no se cobra): el total no incluye costo de envío.
+  const total = (cartTotal - discountAmount) + tax;
 
   return (
     <HeaderLayout>
@@ -217,10 +217,6 @@ export default function CartScreen() {
                 <Text style={styles.summaryValue}>+${tax.toFixed(2)}</Text>
               </View>
               <View style={[styles.summaryRow, styles.summaryRowBorder]}>
-                <Text style={styles.summaryLabel}>Envío</Text>
-                <Text style={styles.summaryValue}>+${shipping.toFixed(2)}</Text>
-              </View>
-              <View style={styles.summaryRow}>
                 <Text style={styles.totalLabel}>Total</Text>
                 <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
               </View>

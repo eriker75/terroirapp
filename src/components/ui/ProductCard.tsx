@@ -49,7 +49,7 @@ export function ProductCard({
           )}
         </View>
         <View style={listStyles.info}>
-          <Text style={listStyles.name} numberOfLines={1}>{product.name}</Text>
+          <Text style={listStyles.name} numberOfLines={1}>{product.name}{product.weightLabel ? ` · ${product.weightLabel}` : ''}</Text>
           <Text style={listStyles.description} numberOfLines={1}>{product.description}</Text>
           {product.origin && <Text style={listStyles.origin}>📍 {product.origin}</Text>}
 
@@ -107,7 +107,7 @@ export function ProductCard({
         )}
       </View>
       <View style={gridStyles.info}>
-        <Text style={gridStyles.category}>{categoryLabel}</Text>
+        <Text style={gridStyles.category}>{categoryLabel}{product.weightLabel ? ` · ${product.weightLabel}` : ''}</Text>
         <Text style={gridStyles.name} numberOfLines={2}>{product.name}</Text>
 
         {hasDiscount && (

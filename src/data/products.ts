@@ -15,6 +15,16 @@ export interface Product {
   stock: number;
   discount?: number;
   image: ImageSourcePropType;
+  /** Peso/tamaño de la bolsa en kg (identificador). 0.275 = 275g, 1 = 1kg. */
+  weightKg?: number;
+  /** Etiqueta de peso derivada para mostrar ("275g" / "1kg"). */
+  weightLabel?: string;
+  /** Venta cruzada: productos relacionados configurados por el admin. */
+  relatedProducts?: {
+    relatedId: string;
+    relationType: 'UPSELL' | 'CROSS_SELL';
+    related?: { id: string; name: string; price: number; image: ImageSourcePropType };
+  }[];
 }
 
 export const products: Product[] = [

@@ -2,7 +2,7 @@ import { VStack } from '@/components/ui/vstack';
 import { COLORS } from '@/constants/colors';
 import type { Product } from '@/data/products';
 import { useProductsQuery } from '@/services';
-import { mapApiProductsToCards } from '@/lib/product-mapper';
+import { mapApiProductsToCards, formatWeight } from '@/lib/product-mapper';
 import { useRouter } from 'expo-router';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { ProductCard } from '@/components/ui/ProductCard';
@@ -71,6 +71,7 @@ type FilterState = {
   maxPrice: string;
   minPoints: string;
   maxPoints: string;
+  weights: number[];
 };
 
 const INITIAL_FILTERS: FilterState = {
@@ -79,6 +80,7 @@ const INITIAL_FILTERS: FilterState = {
   maxPrice: '',
   minPoints: '',
   maxPoints: '',
+  weights: [],
 };
 
 function applyFilters(
@@ -106,6 +108,10 @@ function applyFilters(
     const pts = Math.floor(p.price * 10);
     if (filters.minPoints && pts < parseInt(filters.minPoints, 10)) return false;
     if (filters.maxPoints && pts > parseInt(filters.maxPoints, 10)) return false;
+
+    // Tamaño de bolsa (peso en kg): coincidencia exacta múltiple.
+    if (filters.weights.length && (p.weightKg == null || !filters.weights.includes(p.weightKg)))
+      return false;
 
     return true;
   });
@@ -146,6 +152,15 @@ export default function ProductsScreen() {
   const CATALOG = useMemo(
     () => mapApiProductsToCards(data?.data ?? []),
     [data],
+  );
+
+  // Tamaños de bolsa disponibles (kg) para los chips de filtro.
+  const availableWeights = useMemo(
+    () =>
+      [...new Set(CATALOG.map((p) => p.weightKg).filter((g): g is number => g != null && g > 0))].sort(
+        (a, b) => a - b,
+      ),
+    [CATALOG],
   );
 
   // Pagination state (client-side sobre el catálogo ya traído)
@@ -417,6 +432,36 @@ export default function ProductsScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
+
+                {/* Tamaño (peso de la bolsa) - chips multi-selección */}
+                {availableWeights.length > 0 && (
+                  <>
+                    <Text style={styles.filterSectionTitle}>Tamaño</Text>
+                    <View style={styles.filterOptionsRow}>
+                      {availableWeights.map((grams) => {
+                        const active = tempFilters.weights.includes(grams);
+                        return (
+                          <TouchableOpacity
+                            key={grams}
+                            style={[styles.filterChip, active && styles.filterChipActive]}
+                            onPress={() =>
+                              setTempFilters(prev => ({
+                                ...prev,
+                                weights: prev.weights.includes(grams)
+                                  ? prev.weights.filter(g => g !== grams)
+                                  : [...prev.weights, grams],
+                              }))
+                            }
+                          >
+                            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                              {formatWeight(grams)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </>
+                )}
 
                 <View style={styles.filterModeToggle}>
                   <TouchableOpacity

@@ -48,22 +48,36 @@ export interface BackendProductAttribute {
   value: string;
 }
 
+export interface BackendRelatedProduct {
+  relatedId: string;
+  relationType: 'UPSELL' | 'CROSS_SELL';
+  related?: {
+    id: string;
+    name: string;
+    price: string | number;
+    mainImage?: string | null;
+  };
+}
+
 export interface BackendProduct {
   id: string;
   name: string;
   description: string;
   price: string | number;
   offerPrice?: string | number | null;
-  wholesalePrice?: string | number | null;
+  // Peso/tamaño de la bolsa en kg (Decimal serializado como string). El costo (admin-only) NUNCA llega al móvil.
+  weightKg?: string | number | null;
   visibility?: 'ALL' | 'RETAIL_ONLY' | 'WHOLESALE_ONLY';
   mainImage?: string | null;
   images?: string[];
-  stock: number;
+  // Decimal de Prisma serializado: puede llegar como string (kg fraccionados).
+  stock: string | number;
   pointsPrice?: number | null;
   pointsEarned?: number | null;
   categoryId?: string | null;
   category?: BackendProductCategory | null;
   attributes?: BackendProductAttribute[];
+  relatedProducts?: BackendRelatedProduct[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -71,6 +85,13 @@ export interface BackendProduct {
 const ROAST_ATTR_NAMES = ['roast', 'tueste', 'tostado'];
 const ORIGIN_ATTR_NAMES = ['origin', 'origen', 'procedencia'];
 const VALID_ROASTS = ['light', 'medium', 'dark'] as const;
+
+/** Formatea un peso en KG: < 1kg → "275g"; ≥ 1kg → "1kg" (1.5 → "1.5kg"). */
+export function formatWeight(kg?: number | null): string | undefined {
+  if (kg == null) return undefined;
+  if (kg < 1) return `${Math.round(kg * 1000)}g`;
+  return `${Number(kg.toFixed(3))}kg`;
+}
 
 /**
  * Resuelve la imagen de un producto a una fuente que Image pueda renderizar:
@@ -123,6 +144,8 @@ export function mapApiProductToCard(bp: BackendProduct): CardProduct {
     ? (roastRaw as CardProduct['roastLevel'])
     : undefined;
 
+  const stock = Number(bp.stock);
+
   return {
     id: bp.id,
     name: bp.name,
@@ -134,10 +157,25 @@ export function mapApiProductToCard(bp: BackendProduct): CardProduct {
     origin: findAttr(bp.attributes, ORIGIN_ATTR_NAMES),
     rating: 0,
     reviewCount: 0,
-    inStock: bp.stock > 0,
-    stock: bp.stock,
+    inStock: stock > 0,
+    stock,
     discount,
     image: toImageSource(bp.mainImage ?? bp.images?.[0]),
+    weightKg: bp.weightKg != null ? Number(bp.weightKg) : undefined,
+    weightLabel: formatWeight(bp.weightKg != null ? Number(bp.weightKg) : undefined),
+    // Venta cruzada dinámica: datos del producto relacionado para renderizar.
+    relatedProducts: (bp.relatedProducts ?? []).map((r) => ({
+      relatedId: r.relatedId,
+      relationType: r.relationType,
+      related: r.related
+        ? {
+            id: r.related.id,
+            name: r.related.name,
+            price: Number(r.related.price),
+            image: toImageSource(r.related.mainImage),
+          }
+        : undefined,
+    })),
   };
 }
 
