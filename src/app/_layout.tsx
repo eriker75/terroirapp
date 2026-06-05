@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
+import { PushNotificationProvider } from '@/providers/PushNotificationProvider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -89,10 +90,12 @@ export default function RootLayout() {
           <KeyboardProvider>
             <StatusBar style="dark" />
               <AuthGuard />
-              <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
-              </Stack>
+              <PushNotificationProvider>
+                <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                </Stack>
+              </PushNotificationProvider>
           </KeyboardProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

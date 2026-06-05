@@ -19,6 +19,7 @@ import {
   NOTIF_KEYS,
 } from '@/services/user-settings/user-settings.service';
 import type { UserSetting } from '@/requests/user-settings/user-settings.requests';
+import { usePushNotifications } from '@/providers/PushNotificationProvider';
 
 type Language = 'es' | 'en';
 type Currency = 'USD' | 'EUR' | 'MXN';
@@ -48,6 +49,9 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
   const { data: notifSettings } = useNotificationSettingsQuery();
   const { mutate: upsertNotif } = useUpsertNotificationSettingsMutation();
 
+  // Registro real de push en el dispositivo (token de Expo en el backend).
+  const { enableNotifications, disableNotifications } = usePushNotifications();
+
   const [values, setValues] = useState<Record<string, boolean>>({
     [NOTIF_KEYS.push]: true,
     [NOTIF_KEYS.email]: true,
@@ -65,9 +69,28 @@ export default function PreferenciasPage({ showBackButton = false, onBack, useSa
   const [language, setLanguage] = useState<Language>('es');
   const [currency, setCurrency] = useState<Currency>('USD');
 
-  const toggleSetting = (key: string) => {
+  const toggleSetting = async (key: string) => {
     const next = !values[key];
     setValues((prev) => ({ ...prev, [key]: next })); // optimista
+
+    // El toggle de push además activa/silencia el token real de este dispositivo.
+    if (key === NOTIF_KEYS.push) {
+      if (next) {
+        const ok = await enableNotifications();
+        if (!ok) {
+          // Permiso denegado o emulador: revertir y avisar; no persistir "true".
+          setValues((prev) => ({ ...prev, [key]: false }));
+          Alert.alert(
+            'Permiso necesario',
+            'Activa los permisos de notificaciones en los ajustes del sistema para recibir avisos.',
+          );
+          return;
+        }
+      } else {
+        await disableNotifications();
+      }
+    }
+
     upsertNotif([{ metaKey: key, metaValue: String(next), metaGroup: NOTIFICATIONS_GROUP }]);
   };
 

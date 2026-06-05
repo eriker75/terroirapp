@@ -3,60 +3,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Notification } from '@/types/notification.types';
 
-function ago(ms: number): string {
-  return new Date(Date.now() - ms).toISOString();
-}
-
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n1',
-    title: '¡Tu pedido está en camino!',
-    body: 'Tu pedido #1042 de Cold Brew Premium ha sido enviado y llegará hoy entre 3–5 pm.',
-    read: false,
-    createdAt: ago(1000 * 60 * 12),
-    updatedAt: ago(1000 * 60 * 12),
-  },
-  {
-    id: 'n2',
-    title: 'Oferta especial para ti',
-    body: '20% de descuento en toda la línea de Espresso este fin de semana. ¡No te lo pierdas!',
-    read: false,
-    createdAt: ago(1000 * 60 * 60 * 2),
-    updatedAt: ago(1000 * 60 * 60 * 2),
-  },
-  {
-    id: 'n3',
-    title: 'Puntos acumulados',
-    body: 'Ganaste 45 puntos Terroir con tu último pedido. Ya tienes 320 puntos en total.',
-    read: false,
-    createdAt: ago(1000 * 60 * 60 * 5),
-    updatedAt: ago(1000 * 60 * 60 * 5),
-  },
-  {
-    id: 'n4',
-    title: 'Nuevos orígenes disponibles',
-    body: 'Acaba de llegar café de Kenia AA y Etiopía Yirgacheffe a nuestra tienda. ¡Pruébalos!',
-    read: true,
-    createdAt: ago(1000 * 60 * 60 * 24),
-    updatedAt: ago(1000 * 60 * 60 * 24),
-  },
-  {
-    id: 'n5',
-    title: 'Tu reseña fue publicada',
-    body: 'Gracias por calificar el Cappuccino Clásico. Tu opinión ayuda a la comunidad Terroir.',
-    read: true,
-    createdAt: ago(1000 * 60 * 60 * 48),
-    updatedAt: ago(1000 * 60 * 60 * 48),
-  },
-  {
-    id: 'n6',
-    title: 'Pedido entregado',
-    body: 'Tu pedido #1038 fue entregado exitosamente. ¡Disfruta tu café!',
-    read: true,
-    createdAt: ago(1000 * 60 * 60 * 72),
-    updatedAt: ago(1000 * 60 * 60 * 72),
-  },
-];
+// El inbox parte vacío y se llena con las push reales que recibe el dispositivo
+// (ver PushNotificationProvider → addNotification). Persistido en AsyncStorage.
+const INITIAL_NOTIFICATIONS: Notification[] = [];
 
 interface NotificationsStore {
   notifications: Notification[];
