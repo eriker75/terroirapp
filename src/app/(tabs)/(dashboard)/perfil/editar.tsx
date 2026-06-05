@@ -14,6 +14,7 @@ import { ArrowLeft, Mail, Phone, Calendar, Camera, User } from 'lucide-react-nat
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '@/constants/colors';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useUpdateProfileMutation } from '@/services/auth/auth.service';
 import { useUploadImageMutation } from '@/services/files/files.service';
@@ -192,16 +193,9 @@ export default function EditProfileScreen() {
           <View style={[styles.fieldGroup, { borderBottomWidth: 0 }]}>
             <View style={styles.labelRow}>
               <Calendar size={14} color={COLORS.muted} />
-              <Text style={styles.label}>Fecha de nacimiento</Text>
+              <Text style={styles.label}>Fecha de nacimiento (opcional)</Text>
             </View>
-            <TextInput
-              style={styles.input}
-              value={birthDate}
-              onChangeText={setBirthDate}
-              placeholder="AAAA-MM-DD"
-              placeholderTextColor={COLORS.darkBrown + '60'}
-              keyboardType="numbers-and-punctuation"
-            />
+            <DatePickerField value={birthDate} onChange={setBirthDate} />
           </View>
         </View>
 

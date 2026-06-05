@@ -12,3 +12,4 @@ export * from './notifications/notifications.service';
 export * from './bcv/bcv.service';
 export * from './user-settings/user-settings.service';
 export * from './files/files.service';
+export * from './contact/contact.service';

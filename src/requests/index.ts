@@ -12,3 +12,4 @@ export * from './notifications/notifications.requests';
 export * from './bcv/bcv.requests';
 export * from './user-settings/user-settings.requests';
 export * from './files/files.requests';
+export * from './contact/contact.requests';

@@ -8,13 +8,26 @@ import {
   TextInput,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Phone, Send, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import { useCreateContactMessageMutation } from '@/services/contact/contact.service';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types/api.types';
 
 const PHONE_NUMBER = '584121234567';
+
+// El backend puede devolver `message` como string o como string[] (validaciones).
+function apiMessage(err: unknown, fallback: string): string {
+  const data = (err as AxiosError<ApiError>)?.response?.data?.message;
+  if (Array.isArray(data)) return data[0] ?? fallback;
+  return data ?? fallback;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ContactoPage() {
   const router = useRouter();
@@ -22,15 +35,48 @@ export default function ContactoPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
 
+  const { mutate: sendMessage, isPending } = useCreateContactMessageMutation();
+
   const handleSend = () => {
-    if (!name || !email || !message) {
+    if (isPending) return;
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedMessage) {
       Alert.alert('Error', 'Por favor llena todos los campos.');
       return;
     }
-    Alert.alert(
-      'Mensaje Enviado',
-      'Gracias por contactarnos. Te responderemos a la brevedad.',
-      [{ text: 'OK', onPress: () => router.back() }]
+    if (trimmedName.length < 2) {
+      Alert.alert('Error', 'El nombre es demasiado corto.');
+      return;
+    }
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      Alert.alert('Error', 'Ingresa un correo electrónico válido.');
+      return;
+    }
+    if (trimmedMessage.length < 5) {
+      Alert.alert('Error', 'El mensaje es demasiado corto (mínimo 5 caracteres).');
+      return;
+    }
+
+    sendMessage(
+      { name: trimmedName, email: trimmedEmail, message: trimmedMessage },
+      {
+        onSuccess: () => {
+          setName('');
+          setEmail('');
+          setMessage('');
+          Alert.alert(
+            'Mensaje enviado',
+            'Gracias por contactarnos. Te responderemos a la brevedad.',
+            [{ text: 'OK', onPress: () => router.back() }],
+          );
+        },
+        onError: (err) => {
+          Alert.alert('No se pudo enviar', apiMessage(err, 'Inténtalo de nuevo en un momento.'));
+        },
+      },
     );
   };
 
@@ -109,9 +155,20 @@ export default function ContactoPage() {
             />
           </View>
 
-          <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-            <Send size={18} color={COLORS.darkBrown} />
-            <Text style={styles.sendBtnText}>Enviar Mensaje</Text>
+          <TouchableOpacity
+            style={[styles.sendBtn, isPending && { opacity: 0.6 }]}
+            onPress={handleSend}
+            disabled={isPending}
+            activeOpacity={0.8}
+          >
+            {isPending ? (
+              <ActivityIndicator size="small" color={COLORS.darkBrown} />
+            ) : (
+              <Send size={18} color={COLORS.darkBrown} />
+            )}
+            <Text style={styles.sendBtnText}>
+              {isPending ? 'Enviando...' : 'Enviar Mensaje'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

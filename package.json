@@ -3,9 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "(adb reverse tcp:8081 tcp:8081 && adb reverse tcp:3000 tcp:3000) 2>/dev/null; expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
+    "android": "(adb reverse tcp:8081 tcp:8081 && adb reverse tcp:3000 tcp:3000) 2>/dev/null; expo run:android",
     "ios": "expo run:ios",
     "adb:reverse": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:3000 tcp:3000",
     "web": "expo start --web",
