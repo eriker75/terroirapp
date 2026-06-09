@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -14,7 +13,6 @@ import {
   type NativeSyntheticEvent,
   type NativeScrollEvent,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
 
 const DESTACADOS_PAGE_SIZE = 6;
 import { useRouter } from 'expo-router';
@@ -114,7 +112,6 @@ const PROMO_BANNERS: PromoBanner[] = [
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [search, setSearch] = useState('');
   // Productos destacados (tag "destacados"). La sección se muestra solo si hay ≥1.
   const { data: destacadosData } = useProductsQuery({ tag: 'destacados', limit: 50 });
   const destacados = useMemo(
@@ -321,18 +318,6 @@ export default function HomeScreen() {
           onScroll={handleHomeScroll}
           scrollEventThrottle={400}
         >
-          {/* Search */}
-          <View style={styles.searchContainer}>
-            <Search size={18} color={COLORS.darkBrown + '80'} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar café..."
-              placeholderTextColor={COLORS.darkBrown + '80'}
-              value={search}
-              onChangeText={setSearch}
-            />
-          </View>
-
           {/* Banner Carousel */}
           <View style={styles.bannerContainer}>
             <FlatList
@@ -490,29 +475,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 24,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginHorizontal: 16,
-    marginVertical: 12,
-  },
-  searchInput: {
-    fontFamily: 'JosefinSans-Light',
-    flex: 1,
-    fontSize: 14,
-    color: COLORS.darkBrown,
-  },
-
   // ── Banner carousel ──────────────────────────────────────────────────────
   bannerContainer: {
     marginHorizontal: 16,
+    marginTop: 12,
     marginBottom: 16,
   },
   bannerSlide: {

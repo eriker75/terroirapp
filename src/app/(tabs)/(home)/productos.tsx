@@ -7,11 +7,11 @@ import { useRouter } from 'expo-router';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { PriceFilterInput } from '@/components/ui/PriceFilterInput';
+import { SearchBar } from '@/components/ui/SearchBar';
 import {
   Check,
   Grid3X3,
   List,
-  Search,
   Sliders, X,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -27,14 +27,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useCartStore } from '@/store/useCartStore';
-import { useWishlist } from '@/hooks';
+import { useWishlist, useProductSearch } from '@/hooks';
 
 const { width } = Dimensions.get('window');
 const PAGE_SIZE = 10;
@@ -129,14 +128,7 @@ function applyFilters(
 export default function ProductsScreen() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [search, setSearch]     = useState('');
-  // Término normalizado (sin acentos, minúsculas) con debounce: el input responde
-  // al instante, pero el filtrado espera 300ms tras dejar de teclear.
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(normalizeSearch(search)), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+  const { search, setSearch, debouncedSearch, clearSearch } = useProductSearch();
 
   const [activeFilters, setActiveFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [sortBy, setSortBy]               = useState<SortBy>('newest');
@@ -295,21 +287,12 @@ export default function ProductsScreen() {
           </View>
 
           {/* Search */}
-          <View style={styles.searchContainer}>
-            <Search size={16} color={COLORS.darkBrown + '80'} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar café, origen, tostado..."
-              placeholderTextColor={COLORS.darkBrown + '60'}
-              value={search}
-              onChangeText={setSearch}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity onPress={() => setSearch('')}>
-                <X size={15} color={COLORS.muted} />
-              </TouchableOpacity>
-            )}
-          </View>
+          <SearchBar
+            value={search}
+            onChangeText={setSearch}
+            onClear={clearSearch}
+            style={styles.searchBar}
+          />
 
           {/* Filter badges slider */}
           <ScrollView
@@ -550,13 +533,7 @@ const styles = StyleSheet.create({
   },
   toggleBtn: { padding: 5, borderRadius: 5 },
   toggleBtnActive: { backgroundColor: COLORS.accent },
-  searchContainer: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 24, paddingHorizontal: 14, paddingVertical: 10,
-    marginHorizontal: 16, marginTop: 8, marginBottom: 0,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: COLORS.darkBrown },
+  searchBar: { marginHorizontal: 16, marginTop: 8 },
   pillsRow: { paddingHorizontal: 16, paddingVertical: 4, gap: 8, alignItems: 'center' },
   pill: {
     height: 38, paddingHorizontal: 16, borderRadius: 19,
