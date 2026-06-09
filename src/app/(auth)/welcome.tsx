@@ -1,13 +1,35 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, ImageBackground, Platform } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ImageBackground, Platform, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import AppleLogo from '@/assets/svg/AppleLogo.svg';
-import * as Device from 'expo-device';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { useAppleAuth } from '@/hooks/useAppleAuth';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { signIn: signInWithGoogle, isLoading: isGoogleLoading, error: googleError } =
+    useGoogleAuth();
+  const { signIn: signInWithApple, isLoading: isAppleLoading, error: appleError } =
+    useAppleAuth();
+
+  // Surface de errores (los de cancelación no setean error → no molesta).
+  useEffect(() => {
+    if (googleError) Alert.alert('Google', googleError);
+  }, [googleError]);
+  useEffect(() => {
+    if (appleError) Alert.alert('Apple', appleError);
+  }, [appleError]);
+
+  // Tras un login exitoso, el AuthGuard del layout raíz redirige a las tabs solo.
+  const handleGoogleLogin = () => {
+    void signInWithGoogle();
+  };
+  const handleAppleLogin = () => {
+    void signInWithApple();
+  };
 
   return (
     <ImageBackground
@@ -56,25 +78,39 @@ export default function WelcomeScreen() {
 
               <TouchableOpacity
                 style={styles.googleButton}
-                onPress={() => console.log('Google login')}
+                onPress={handleGoogleLogin}
+                disabled={isGoogleLoading}
                 activeOpacity={0.4}
               >
-                <Image
-                  source={require('@/assets/images/GoogleLoginBtnImg.png')}
-                  style={styles.googleIcon}
-                  resizeMode="contain"
-                />
-                <Text style={styles.googleButtonText}>Continuar con Google</Text>
+                {isGoogleLoading ? (
+                  <ActivityIndicator size="small" color={COLORS.darkBrown} />
+                ) : (
+                  <>
+                    <Image
+                      source={require('@/assets/images/GoogleLoginBtnImg.png')}
+                      style={styles.googleIcon}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.googleButtonText}>Continuar con Google</Text>
+                  </>
+                )}
               </TouchableOpacity>
 
-              {(Platform.OS === 'ios' || Device.brand === 'Apple') && (
+              {Platform.OS === 'ios' && (
                 <TouchableOpacity
                   style={[styles.googleButton, { marginTop: 12 }]}
-                  onPress={() => console.log('Apple login')}
+                  onPress={handleAppleLogin}
+                  disabled={isAppleLoading}
                   activeOpacity={0.4}
                 >
-                  <AppleLogo width={20} height={20} />
-                  <Text style={styles.googleButtonText}>Continuar con Apple</Text>
+                  {isAppleLoading ? (
+                    <ActivityIndicator size="small" color={COLORS.darkBrown} />
+                  ) : (
+                    <>
+                      <AppleLogo width={20} height={20} />
+                      <Text style={styles.googleButtonText}>Continuar con Apple</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
             </BlurView>

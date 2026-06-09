@@ -16,7 +16,9 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com"
+        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "REEMPLAZAR_WEB_CLIENT_ID",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "REEMPLAZAR_IOS_CLIENT_ID"
       }
     },
     "browserstack": {
@@ -34,7 +36,9 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://terroirapp.com"
+        "EXPO_PUBLIC_BACKEND_URL": "https://terroirapp.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "REEMPLAZAR_WEB_CLIENT_ID",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "REEMPLAZAR_IOS_CLIENT_ID"
       }
     }
   }

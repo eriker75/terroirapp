@@ -98,6 +98,25 @@ export const registerRequest = (dto: RegisterRequestDto): Promise<AuthResponseDt
     })
     .then((r) => toAuthResponse(r.data));
 
+// Login/registro con Google: enviamos el id_token que emite el SDK nativo
+// (@react-native-google-signin) al backend, que lo verifica y devuelve el mismo
+// shape plano que login/register (usuario + accessToken + refreshToken).
+export const googleLoginRequest = (idToken: string): Promise<AuthResponseDto> =>
+  api
+    .post<BackendAuthResponse>('/users/google', { idToken })
+    .then((r) => toAuthResponse(r.data));
+
+// Login/registro con Apple: identity_token de expo-apple-authentication + (sólo
+// el 1er login) nombre/apellido que Apple entrega esa vez.
+export const appleLoginRequest = (input: {
+  identityToken: string;
+  firstName?: string;
+  lastName?: string;
+}): Promise<AuthResponseDto> =>
+  api
+    .post<BackendAuthResponse>('/users/apple', input)
+    .then((r) => toAuthResponse(r.data));
+
 export const getProfileRequest = (id: string): Promise<UserProfile> =>
   api.get<BackendUser>(`/users/${id}`).then((r) => mapBackendUser(r.data));
 

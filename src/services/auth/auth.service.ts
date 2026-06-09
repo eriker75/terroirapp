@@ -3,6 +3,8 @@ import type { AxiosError } from 'axios';
 import {
   loginRequest,
   registerRequest,
+  googleLoginRequest,
+  appleLoginRequest,
   getProfileRequest,
   updateProfileRequest,
   changePasswordRequest,
@@ -42,6 +44,28 @@ export function useLoginMutation() {
 export function useRegisterMutation() {
   return useMutation<AuthResponseDto, AxiosError, RegisterRequestDto>({
     mutationFn: registerRequest,
+    onSuccess: persistAuth,
+  });
+}
+
+// Login/registro con Google: recibe el id_token del SDK nativo, lo canjea en el
+// backend y persiste la sesión igual que login/register.
+export function useGoogleLoginMutation() {
+  return useMutation<AuthResponseDto, AxiosError, string>({
+    mutationFn: googleLoginRequest,
+    onSuccess: persistAuth,
+  });
+}
+
+// Login/registro con Apple: recibe el identity_token (+ nombre del 1er login),
+// lo canjea en el backend y persiste la sesión igual que login/register.
+export function useAppleLoginMutation() {
+  return useMutation<
+    AuthResponseDto,
+    AxiosError,
+    { identityToken: string; firstName?: string; lastName?: string }
+  >({
+    mutationFn: appleLoginRequest,
     onSuccess: persistAuth,
   });
 }
