@@ -9,14 +9,17 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import { Trash2, Minus, Plus, ShoppingBag, X } from 'lucide-react-native';
+import { Trash2, Minus, Plus, ShoppingBag, X, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
 import { useCartStore } from '@/store/useCartStore';
+import { useProfileStore } from '@/store/useProfileStore';
 
 const PLACEHOLDER = require('@/assets/images/coffee-product-5.jpg');
 const USD_TO_BS = 6.96;
+// Tasa de fidelidad: 1 USD = 10 puntos (igual que el checkout).
+const USD_TO_POINTS = 10;
 
 export default function CartScreen() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export default function CartScreen() {
   const removeFromCart = useCartStore((s) => s.removeFromCart);
   const clearCart = useCartStore((s) => s.clearCart);
   const cartTotal = useCartStore((s) => s.cartTotal);
+  const user = useProfileStore((s) => s.user);
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase();
@@ -47,9 +51,14 @@ export default function CartScreen() {
   };
 
   const discountAmount = appliedCoupon ? (cartTotal * (appliedCoupon.amount / 100)) : 0;
-  const tax = cartItems.length > 0 ? (cartTotal - discountAmount) * 0.1 : 0;
-  // Envío descartado (no se cobra): el total no incluye costo de envío.
-  const total = (cartTotal - discountAmount) + tax;
+  // Sin impuesto ni envío: el total es el subtotal menos el descuento del cupón.
+  const total = cartTotal - discountAmount;
+
+  // Puntos de fidelidad que ganará la orden. Solo B2C: los mayoristas (B2B) no
+  // participan del sistema de puntos. Un invitado (sin user) también los ve, como
+  // incentivo — espeja `showLoyalty` de la web.
+  const withLoyalty = user?.accountType !== 'B2B';
+  const pointsToEarn = Math.round(total * USD_TO_POINTS);
 
   return (
     <HeaderLayout>
@@ -212,14 +221,18 @@ export default function CartScreen() {
                   </Text>
                 </View>
               )}
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Impuesto (10%)</Text>
-                <Text style={styles.summaryValue}>+${tax.toFixed(2)}</Text>
-              </View>
               <View style={[styles.summaryRow, styles.summaryRowBorder]}>
                 <Text style={styles.totalLabel}>Total</Text>
                 <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
               </View>
+              {withLoyalty && (
+                <View style={styles.orderPointsRow}>
+                  <Star size={15} color={COLORS.yellow} fill={COLORS.yellow} />
+                  <Text style={styles.orderPointsText}>
+                    Ganarás <Text style={styles.orderPointsValue}>{pointsToEarn}</Text> puntos con esta orden
+                  </Text>
+                </View>
+              )}
               <TouchableOpacity
                 style={styles.checkoutBtn}
                 onPress={() => router.push('/checkout' as any)}
@@ -400,6 +413,15 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 14, color: COLORS.darkBrown, fontWeight: '500' },
   totalLabel: { fontSize: 17, fontWeight: '700', color: COLORS.darkBrown },
   totalValue: { fontSize: 20, fontWeight: '700', color: COLORS.accent },
+  orderPointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  orderPointsText: { fontSize: 13, fontWeight: '600', color: '#854D0E' },
+  orderPointsValue: { fontWeight: '800', color: '#854D0E' },
   checkoutBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,

@@ -1,18 +1,36 @@
-import { ArrowLeft, ExternalLink, MapPin, Navigation } from 'lucide-react-native';
+import { ArrowLeft, Clock, ExternalLink, MapPin, Navigation } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MapPicker } from '@/components/blocs/MapPicker';
 import { COLORS } from '@/constants/colors';
+import { useStoreSettings } from '@/services/settings/settings.service';
+import { extractMapsCoords } from '@/lib/maps';
 
-const LOCATION = 'Las Mercedes, Caracas, Venezuela';
-const STORE_LAT = 10.4894;
-const STORE_LNG = -66.8636;
-const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${STORE_LAT},${STORE_LNG}`;
+// Fallback si el admin aún no configuró la ubicación en settings.
+const DEFAULT_LOCATION = 'Las Mercedes, Caracas, Venezuela';
+const DEFAULT_LAT = 10.4894;
+const DEFAULT_LNG = -66.8636;
 
 export default function UbicacionPage() {
   const router = useRouter();
+
+  // Ubicación/horario configurados por el admin (settings). La dirección vive en
+  // GENERAL; el horario y la URL de Maps en CONTACT (mismo origen que la web).
+  const general = useStoreSettings('GENERAL');
+  const contact = useStoreSettings('CONTACT');
+  const location = general.get('general_address', DEFAULT_LOCATION);
+  const hours = contact.get('contact_hours', '');
+  const mapsUrl = contact.get('contact_maps_url', '');
+
+  const coords = extractMapsCoords(mapsUrl);
+  const storeLat = coords?.lat ?? DEFAULT_LAT;
+  const storeLng = coords?.lng ?? DEFAULT_LNG;
+  // Botón "Abrir en Maps": usa el enlace del admin si lo hay; si no, una búsqueda
+  // por coordenadas.
+  const openUrl =
+    mapsUrl || `https://www.google.com/maps/search/?api=1&query=${storeLat},${storeLng}`;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={[]}>
@@ -31,15 +49,27 @@ export default function UbicacionPage() {
           </View>
           <View style={styles.infoTexts}>
             <Text style={styles.infoLabel}>Dirección</Text>
-            <Text style={styles.infoValue}>{LOCATION}</Text>
+            <Text style={styles.infoValue}>{location}</Text>
           </View>
         </View>
+
+        {!!hours && (
+          <View style={styles.infoCard}>
+            <View style={styles.iconBox}>
+              <Clock size={20} color={COLORS.accent} />
+            </View>
+            <View style={styles.infoTexts}>
+              <Text style={styles.infoLabel}>Horario de atención</Text>
+              <Text style={styles.infoValue}>{hours}</Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.mapWrapper}>
           <MapPicker
             readOnly
-            initialLatitude={STORE_LAT}
-            initialLongitude={STORE_LNG}
+            initialLatitude={storeLat}
+            initialLongitude={storeLng}
             height={360}
             zoomLevel={16}
           />
@@ -52,7 +82,7 @@ export default function UbicacionPage() {
 
         <TouchableOpacity
           style={styles.openMapBtn}
-          onPress={() => Linking.openURL(MAPS_URL)}
+          onPress={() => Linking.openURL(openUrl)}
           activeOpacity={0.85}
         >
           <MapPin size={14} color={COLORS.lightBeige} />

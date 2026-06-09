@@ -20,10 +20,11 @@ import {
   Mail,
   Settings,
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { useProfileStore } from '@/store/useProfileStore';
-import { useLogoutMutation } from '@/services';
+import { useLogoutMutation, useProfileQuery } from '@/services';
 import { resolveImageSource } from '@/lib/product-mapper';
 
 
@@ -60,6 +61,16 @@ export default function ProfileScreen() {
   const { mutate: logout } = useLogoutMutation();
 
   const points = user?.loyaltyPoints ?? 0;
+
+  // Refresca el perfil (incluye el saldo de puntos) cada vez que se enfoca la
+  // pantalla. Sin esto, el store muestra el valor persistido y los puntos recién
+  // ganados (una orden, o ajuste desde la web) no se reflejan hasta reabrir la app.
+  const { refetch: refetchProfile } = useProfileQuery();
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) refetchProfile();
+    }, [refetchProfile, user?.id]),
+  );
 
   const handleLogout = () => {
     Alert.alert('Cerrar Sesión', '¿Estás seguro de que quieres cerrar sesión?', [

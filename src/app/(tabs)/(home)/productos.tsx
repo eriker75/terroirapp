@@ -15,6 +15,7 @@ import {
   Sliders, X,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { normalizeSearch } from '@/lib/search';
 import {
   ActivityIndicator,
   Dimensions,
@@ -90,8 +91,9 @@ function applyFilters(
   sort: SortBy
 ): Product[] {
   let result = data.filter((p) => {
-    // Search
-    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    // Búsqueda por nombre: insensible a mayúsculas y acentos (`search` ya viene
+    // normalizado). "cafe etiopia" encuentra "Café Etiopía".
+    if (search && !normalizeSearch(p.name).includes(search)) return false;
 
     // Category
     if (filters.category !== 'all') {
@@ -128,6 +130,13 @@ export default function ProductsScreen() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [search, setSearch]     = useState('');
+  // Término normalizado (sin acentos, minúsculas) con debounce: el input responde
+  // al instante, pero el filtrado espera 300ms tras dejar de teclear.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(normalizeSearch(search)), 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const [activeFilters, setActiveFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [sortBy, setSortBy]               = useState<SortBy>('newest');
@@ -167,14 +176,14 @@ export default function ProductsScreen() {
   const [page, setPage] = useState(1);
 
   // Derive full filtered list, then slice to current page
-  const allFiltered = applyFilters(CATALOG, activeFilters, search, sortBy);
+  const allFiltered = applyFilters(CATALOG, activeFilters, debouncedSearch, sortBy);
   const visible     = allFiltered.slice(0, page * PAGE_SIZE);
   const hasMore     = visible.length < allFiltered.length;
 
   // Reset pagination whenever filter/search/sort changes
   useEffect(() => {
     setPage(1);
-  }, [activeFilters, search, sortBy]);
+  }, [activeFilters, debouncedSearch, sortBy]);
 
   const loadMore = useCallback(() => {
     if (hasMore) setPage((p) => p + 1);

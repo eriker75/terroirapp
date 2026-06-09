@@ -7,8 +7,9 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { ArrowLeft, MapPin, Package, Star, Check, CreditCard } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Package, Star, Check, CreditCard, RefreshCw } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { useOrderQuery } from '@/services/orders/orders.service';
@@ -23,7 +24,7 @@ function formatDate(iso: string): string {
 export default function OrderDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, isLoading, isError } = useOrderQuery(id ?? '');
+  const { data, isLoading, isError, refetch, isRefetching } = useOrderQuery(id ?? '');
   const order = useMemo(() => (data ? mapOrder(data) : null), [data]);
 
   const goBack = () => router.navigate('/(tabs)/(dashboard)/perfil/ordenes' as any);
@@ -62,10 +63,27 @@ export default function OrderDetailScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack}><ArrowLeft size={24} color={COLORS.darkBrown} /></TouchableOpacity>
         <Text style={styles.headerTitle}>Detalles del Pedido</Text>
-        <View style={{ width: 24 }} />
+        {isRefetching ? (
+          <ActivityIndicator size="small" color={COLORS.accent} style={{ width: 24 }} />
+        ) : (
+          <TouchableOpacity onPress={() => { void refetch(); }} accessibilityLabel="Actualizar pedido">
+            <RefreshCw size={22} color={COLORS.darkBrown} />
+          </TouchableOpacity>
+        )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => { void refetch(); }}
+            tintColor={COLORS.accent}
+            colors={[COLORS.accent]}
+          />
+        }
+      >
         {/* Status card */}
         <View style={[styles.statusCard, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
           <Text style={styles.statusEmoji}>{cfg.emoji}</Text>
