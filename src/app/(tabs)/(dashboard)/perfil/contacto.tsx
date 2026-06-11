@@ -29,10 +29,22 @@ function apiMessage(err: unknown, fallback: string): string {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Mismos asuntos que el selector del formulario de contacto de la web: se envía
+// la etiqueta legible (es lo que muestra el dashboard de mensajes del admin).
+const SUBJECTS = [
+  'Consulta sobre producto',
+  'Problema con mi pedido',
+  'Consulta de suscripción',
+  'Quiero ser mayorista',
+  'Asociaciones / Negocios',
+  'Otro',
+];
+
 export default function ContactoPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
 
   const { mutate: sendMessage, isPending } = useCreateContactMessageMutation();
@@ -55,17 +67,22 @@ export default function ContactoPage() {
       Alert.alert('Error', 'Ingresa un correo electrónico válido.');
       return;
     }
+    if (!subject) {
+      Alert.alert('Error', 'Selecciona un asunto.');
+      return;
+    }
     if (trimmedMessage.length < 5) {
       Alert.alert('Error', 'El mensaje es demasiado corto (mínimo 5 caracteres).');
       return;
     }
 
     sendMessage(
-      { name: trimmedName, email: trimmedEmail, message: trimmedMessage },
+      { name: trimmedName, email: trimmedEmail, subject, message: trimmedMessage },
       {
         onSuccess: () => {
           setName('');
           setEmail('');
+          setSubject('');
           setMessage('');
           Alert.alert(
             'Mensaje enviado',
@@ -139,6 +156,27 @@ export default function ContactoPage() {
               value={email}
               onChangeText={setEmail}
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Asunto</Text>
+            <View style={styles.subjectWrap}>
+              {SUBJECTS.map((s) => {
+                const active = subject === s;
+                return (
+                  <TouchableOpacity
+                    key={s}
+                    style={[styles.subjectChip, active && styles.subjectChipActive]}
+                    onPress={() => setSubject(active ? '' : s)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.subjectChipText, active && styles.subjectChipTextActive]}>
+                      {s}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -239,6 +277,18 @@ const styles = StyleSheet.create({
     color: COLORS.darkBrown,
   },
   textArea: { height: 100 },
+  subjectWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  subjectChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.lightBeige,
+  },
+  subjectChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  subjectChipText: { fontSize: 12, fontWeight: '600', color: COLORS.darkBrown },
+  subjectChipTextActive: { color: COLORS.darkBrown },
   sendBtn: {
     flexDirection: 'row',
     alignItems: 'center',

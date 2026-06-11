@@ -16,6 +16,7 @@ import { ArrowLeft, MapPin, CreditCard, Check, X, User } from 'lucide-react-nati
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
+import { StoreHoursNotice } from '@/components/ui/StoreHoursNotice';
 import { useCartStore } from '@/store/useCartStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useAddressesQuery, useCreateAddressMutation } from '@/services/addresses/addresses.service';
@@ -238,6 +239,8 @@ export default function CheckoutScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <StoreHoursNotice />
+
           {/* Contacto */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>

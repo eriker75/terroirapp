@@ -14,6 +14,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { useOrderQuery } from '@/services/orders/orders.service';
 import { mapOrder, ORDER_TRACKING_STEPS, ORDER_STATUS_CONFIG } from '@/lib/order-mapper';
+import { StoreHoursNotice } from '@/components/ui/StoreHoursNotice';
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -95,6 +96,10 @@ export default function OrderDetailScreen() {
             <Text style={[styles.statusBadgeText, { color: cfg.text }]}>{cfg.label}</Text>
           </View>
         </View>
+
+        {/* Pedido hecho fuera del horario de servicio (evaluado a su fecha de
+            creación): mientras siga PENDING, se explica cuándo se procesará. */}
+        {order.status === 'PENDING' && <StoreHoursNotice placed at={order.createdAt} />}
 
         {/* Seguimiento */}
         <View style={styles.card}>

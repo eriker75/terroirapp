@@ -12,71 +12,80 @@ import {
   Platform,
   Keyboard,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { ArrowLeft, MapPin, Phone, Edit2, Plus, X, Trash2, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import type { AxiosError } from 'axios';
 import { COLORS } from '@/constants/colors';
 import { MapPicker, LocationResult } from '@/components/blocs/MapPicker';
-
-interface Address {
-  id: number;
-  type: string;
-  address: string;
-  phone: string;
-  default: boolean;
-  latitude?: number;
-  longitude?: number;
-}
-
-const initialAddresses: Address[] = [
-  {
-    id: 1,
-    type: 'Casa',
-    address: '4140 Parker Rd., Allentown, NM 31134',
-    phone: '(316) 555-0116',
-    default: true,
-  },
-  {
-    id: 2,
-    type: 'Oficina',
-    address: '2464 Royal Ln., Mesa, AZ 45463',
-    phone: '(505) 555-0125',
-    default: false,
-  },
-];
+import {
+  useAddressesQuery,
+  useCreateAddressMutation,
+  useUpdateAddressMutation,
+  useDeleteAddressMutation,
+} from '@/services/addresses/addresses.service';
+import { useProfileStore } from '@/store/useProfileStore';
+import type { Address } from '@/types/address.types';
+import type { ApiError } from '@/types/api.types';
 
 interface Props {
   showBackButton?: boolean;
   onBack?: () => void;
 }
 
+type AddressForm = {
+  label: string;
+  line1: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+const EMPTY_FORM: AddressForm = { label: '', line1: '', city: '', state: '', zip: '', phone: '' };
+
+function apiMessage(err: unknown, fallback: string): string {
+  const data = (err as AxiosError<ApiError>)?.response?.data?.message;
+  if (Array.isArray(data)) return data[0] ?? fallback;
+  return data ?? fallback;
+}
+
+// Direcciones REALES del usuario autenticado (las mismas que usa el checkout):
+// se listan, crean, editan y borran contra el backend (/addresses).
 export default function DireccionesPage({ showBackButton = false, onBack }: Props) {
   const router = useRouter();
-  const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
+  const user = useProfileStore((s) => s.user);
+
+  const { data: addresses = [], isLoading } = useAddressesQuery();
+  const { mutate: createAddress, isPending: creating } = useCreateAddressMutation();
+  const { mutate: updateAddress, isPending: updating } = useUpdateAddressMutation();
+  const { mutate: deleteAddress } = useDeleteAddressMutation();
+  const saving = creating || updating;
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<{
-    type: string;
-    address: string;
-    phone: string;
-    latitude?: number;
-    longitude?: number;
-  }>({ type: '', address: '', phone: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<AddressForm>(EMPTY_FORM);
 
   const openAdd = () => {
     setEditingId(null);
-    setForm({ type: '', address: '', phone: '' });
+    setForm({ ...EMPTY_FORM, phone: user?.phone ?? '' });
     setModalOpen(true);
   };
 
   const openEdit = (addr: Address) => {
     setEditingId(addr.id);
     setForm({
-      type: addr.type,
-      address: addr.address,
+      label: addr.label ?? '',
+      line1: addr.line1,
+      city: addr.city,
+      state: addr.state,
+      zip: addr.zip === '0000' ? '' : addr.zip,
       phone: addr.phone,
-      latitude: addr.latitude,
-      longitude: addr.longitude,
+      latitude: addr.latitude ?? undefined,
+      longitude: addr.longitude ?? undefined,
     });
     setModalOpen(true);
   };
@@ -84,45 +93,69 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
   const handleLocationSelect = (loc: LocationResult) => {
     setForm((f) => ({
       ...f,
-      address: loc.displayName,
+      line1: loc.displayName,
       latitude: loc.latitude,
       longitude: loc.longitude,
     }));
   };
 
   const handleSave = () => {
-    if (!form.type || !form.address) {
-      Alert.alert('Error', 'El tipo y la dirección son obligatorios');
+    if (!user || saving) return;
+    if (!form.label.trim() || !form.line1.trim() || !form.city.trim() || !form.state.trim()) {
+      Alert.alert('Faltan datos', 'Completa etiqueta, dirección, ciudad y estado.');
       return;
     }
+
+    const common = {
+      label: form.label.trim(),
+      line1: form.line1.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+      zip: form.zip.trim() || '0000',
+      phone: form.phone.trim() || user.phone || '',
+      latitude: form.latitude,
+      longitude: form.longitude,
+    };
+    const onError = (err: unknown) =>
+      Alert.alert('Error', apiMessage(err, 'No se pudo guardar la dirección.'));
+    const onSuccess = () => setModalOpen(false);
+
     if (editingId !== null) {
-      setAddresses((prev) =>
-        prev.map((a) => (a.id === editingId ? { ...a, ...form } : a))
-      );
+      updateAddress({ id: editingId, dto: common }, { onSuccess, onError });
     } else {
-      const newId = Math.max(...addresses.map((a) => a.id), 0) + 1;
-      setAddresses((prev) => [
-        ...prev,
-        { id: newId, ...form, default: prev.length === 0 },
-      ]);
+      createAddress(
+        {
+          userId: user.id,
+          recipientName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Cliente',
+          country: 'Venezuela',
+          // La primera dirección queda como predeterminada automáticamente.
+          isDefault: addresses.length === 0,
+          ...common,
+        },
+        { onSuccess, onError },
+      );
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     Alert.alert('Eliminar dirección', '¿Estás seguro?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
         style: 'destructive',
-        onPress: () => setAddresses((prev) => prev.filter((a) => a.id !== id)),
+        onPress: () =>
+          deleteAddress(id, {
+            onError: (err) => Alert.alert('Error', apiMessage(err, 'No se pudo eliminar.')),
+          }),
       },
     ]);
   };
 
-  const setDefault = (id: number) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, default: a.id === id }))
+  // El backend desmarca las demás al poner isDefault=true (una sola llamada).
+  const setDefault = (id: string) => {
+    updateAddress(
+      { id, dto: { isDefault: true } },
+      { onError: (err) => Alert.alert('Error', apiMessage(err, 'No se pudo actualizar.')) },
     );
   };
 
@@ -152,7 +185,11 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {addresses.length === 0 ? (
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={COLORS.accent} />
+          </View>
+        ) : addresses.length === 0 ? (
           <View style={styles.emptyState}>
             <MapPin size={48} color={COLORS.border} />
             <Text style={styles.emptyTitle}>Sin direcciones</Text>
@@ -163,13 +200,13 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
           </View>
         ) : (
           addresses.map((addr) => (
-            <View key={addr.id} style={[styles.card, addr.default && styles.cardDefault]}>
+            <View key={addr.id} style={[styles.card, addr.isDefault && styles.cardDefault]}>
               {/* Top row */}
               <View style={styles.cardTop}>
                 <View style={styles.typePill}>
                   <MapPin size={14} color={COLORS.accent} />
-                  <Text style={styles.typeText}>{addr.type}</Text>
-                  {addr.default && (
+                  <Text style={styles.typeText}>{addr.label || 'Dirección'}</Text>
+                  {addr.isDefault && (
                     <View style={styles.defaultBadge}>
                       <Text style={styles.defaultBadgeText}>Predeterminada</Text>
                     </View>
@@ -186,16 +223,22 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
               </View>
 
               {/* Address */}
-              <Text style={styles.addressText}>{addr.address}</Text>
+              <Text style={styles.addressText}>
+                {addr.line1}
+                {addr.city ? `, ${addr.city}` : ''}
+                {addr.state ? `, ${addr.state}` : ''}
+              </Text>
 
               {/* Phone */}
-              <View style={styles.phoneRow}>
-                <Phone size={14} color={COLORS.muted} />
-                <Text style={styles.phoneText}>{addr.phone}</Text>
-              </View>
+              {!!addr.phone && (
+                <View style={styles.phoneRow}>
+                  <Phone size={14} color={COLORS.muted} />
+                  <Text style={styles.phoneText}>{addr.phone}</Text>
+                </View>
+              )}
 
               {/* Set default */}
-              {!addr.default && (
+              {!addr.isDefault && (
                 <TouchableOpacity style={styles.setDefaultBtn} onPress={() => setDefault(addr.id)}>
                   <Check size={14} color={COLORS.brown} />
                   <Text style={styles.setDefaultText}>Establecer como predeterminada</Text>
@@ -206,7 +249,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
         )}
 
         {/* FAB-style bottom add */}
-        {addresses.length > 0 && (
+        {!isLoading && addresses.length > 0 && (
           <TouchableOpacity style={styles.addMoreBtn} onPress={openAdd}>
             <Plus size={16} color={COLORS.accent} />
             <Text style={styles.addMoreText}>Agregar nueva dirección</Text>
@@ -234,11 +277,11 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
               contentContainerStyle={styles.sheetContent}
             >
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Tipo (Casa, Oficina, etc.)</Text>
+                <Text style={styles.formLabel}>Etiqueta (Casa, Oficina, etc.)</Text>
                 <TextInput
                   style={styles.formInput}
-                  value={form.type}
-                  onChangeText={(v) => setForm((f) => ({ ...f, type: v }))}
+                  value={form.label}
+                  onChangeText={(v) => setForm((f) => ({ ...f, label: v }))}
                   placeholder="Casa"
                   placeholderTextColor={COLORS.darkBrown + '60'}
                 />
@@ -248,7 +291,7 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
                 <Text style={styles.formLabel}>Ubicación en el mapa</Text>
                 <MapPicker
                   countryCode="ve"
-                  initialAddress={form.address}
+                  initialAddress={form.line1}
                   initialLatitude={form.latitude}
                   initialLongitude={form.longitude}
                   onLocationSelect={handleLocationSelect}
@@ -261,22 +304,66 @@ export default function DireccionesPage({ showBackButton = false, onBack }: Prop
                 )}
               </View>
 
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Teléfono de contacto</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={form.phone}
-                  onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
-                  placeholder="(000) 000-0000"
-                  placeholderTextColor={COLORS.darkBrown + '60'}
-                  keyboardType="phone-pad"
-                />
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>Ciudad</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={form.city}
+                    onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
+                    placeholder="Caracas"
+                    placeholderTextColor={COLORS.darkBrown + '60'}
+                  />
+                </View>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>Estado</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={form.state}
+                    onChangeText={(v) => setForm((f) => ({ ...f, state: v }))}
+                    placeholder="Distrito Capital"
+                    placeholderTextColor={COLORS.darkBrown + '60'}
+                  />
+                </View>
               </View>
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-                <Text style={styles.saveBtnText}>
-                  {editingId !== null ? 'Guardar cambios' : 'Agregar dirección'}
-                </Text>
+              <View style={styles.formRow}>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>Código postal (opcional)</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={form.zip}
+                    onChangeText={(v) => setForm((f) => ({ ...f, zip: v }))}
+                    placeholder="1010"
+                    placeholderTextColor={COLORS.darkBrown + '60'}
+                    keyboardType="number-pad"
+                  />
+                </View>
+                <View style={[styles.formGroup, { flex: 1 }]}>
+                  <Text style={styles.formLabel}>Teléfono de contacto</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={form.phone}
+                    onChangeText={(v) => setForm((f) => ({ ...f, phone: v }))}
+                    placeholder="(000) 000-0000"
+                    placeholderTextColor={COLORS.darkBrown + '60'}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color={COLORS.darkBrown} />
+                ) : (
+                  <Text style={styles.saveBtnText}>
+                    {editingId !== null ? 'Guardar cambios' : 'Agregar dirección'}
+                  </Text>
+                )}
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -322,7 +409,7 @@ const styles = StyleSheet.create({
   },
   cardDefault: { borderColor: COLORS.accent, borderWidth: 1.5 },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  typePill: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  typePill: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   typeText: { fontSize: 15, fontWeight: '700', color: COLORS.darkBrown },
   defaultBadge: {
     backgroundColor: COLORS.accent + '20',
@@ -391,6 +478,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: { fontSize: 18, fontWeight: '700', color: COLORS.darkBrown },
   formGroup: { gap: 6 },
+  formRow: { flexDirection: 'row', gap: 12 },
   formLabel: { fontSize: 13, fontWeight: '600', color: COLORS.darkBrown },
   formInput: {
     backgroundColor: COLORS.lightBeige,
@@ -401,12 +489,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 14,
     color: COLORS.darkBrown,
-  },
-  formInputMulti: { 
-    minHeight: 100, 
-    textAlignVertical: 'top', 
-    borderRadius: 18,
-    paddingTop: 12 
   },
   saveBtn: {
     backgroundColor: COLORS.accent,

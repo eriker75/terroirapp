@@ -1,5 +1,8 @@
 import { Tabs } from 'expo-router';
-import { Home, Heart, Grid3X3, ShoppingBag, User } from 'lucide-react-native';
+// Grid3X3 era el icono anterior de la tab Productos; se cambió por CoffeeBean
+// (icono propio: el `Bean` de lucide parece una legumbre, no un grano de café).
+import { Home, Heart, /* Grid3X3, Bean, */ ShoppingBag, User } from 'lucide-react-native';
+import { CoffeeBean } from '@/components/ui/icons/CoffeeBean';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/colors';
 import { useCartStore } from '@/store/useCartStore';
@@ -65,7 +68,9 @@ export default function TabLayout() {
         name="(home)/productos"
         options={{
           title: 'Productos',
-          tabBarIcon: ({ color, size }) => <Grid3X3 color={color} size={size - 2} />,
+          // Icono anterior:
+          // tabBarIcon: ({ color, size }) => <Grid3X3 color={color} size={size - 2} />,
+          tabBarIcon: ({ color, size }) => <CoffeeBean color={color} size={size - 2} />,
         }}
       />
       <Tabs.Screen

@@ -9,6 +9,8 @@ export interface CreateAddressRequestDto {
   zip: string;
   country?: string;
   label?: string;
+  latitude?: number;
+  longitude?: number;
   isDefault?: boolean;
 }
 

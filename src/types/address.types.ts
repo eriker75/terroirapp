@@ -10,6 +10,8 @@ export interface Address {
   state: string;
   zip: string;
   country: string;
+  latitude?: number | null;
+  longitude?: number | null;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;

@@ -13,6 +13,7 @@ import { Trash2, Minus, Plus, ShoppingBag, X, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
+import { StoreHoursNotice } from '@/components/ui/StoreHoursNotice';
 import { useCartStore } from '@/store/useCartStore';
 import { useProfileStore } from '@/store/useProfileStore';
 
@@ -93,6 +94,7 @@ export default function CartScreen() {
         ) : (
           <>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+              <StoreHoursNotice />
               {cartItems.map((item) => {
                 const p = item.product;
                 const hasDiscount = !!p.discount && p.discount > 0;

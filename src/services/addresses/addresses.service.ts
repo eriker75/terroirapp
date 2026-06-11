@@ -48,18 +48,27 @@ export function useCreateAddressMutation() {
 
 export function useUpdateAddressMutation() {
   const queryClient = useQueryClient();
+  const userId = useProfileStore((s) => s.user?.id ?? '');
 
   return useMutation<AddressResponseDto, AxiosError, { id: string; dto: UpdateAddressRequestDto }>({
     mutationFn: ({ id, dto }) => updateAddressRequest(id, dto),
-    onSuccess: (data) => queryClient.setQueryData(QUERY_KEYS.ADDRESSES.DETAIL(data.id), data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.ADDRESSES.DETAIL(data.id), data);
+      // La lista del usuario también cambia (p. ej. isDefault desmarca a las demás).
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADDRESSES.USER(userId) });
+    },
   });
 }
 
 export function useDeleteAddressMutation() {
   const queryClient = useQueryClient();
+  const userId = useProfileStore((s) => s.user?.id ?? '');
 
   return useMutation<AddressResponseDto, AxiosError, string>({
     mutationFn: deleteAddressRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADDRESSES.LIST() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADDRESSES.LIST() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ADDRESSES.USER(userId) });
+    },
   });
 }
