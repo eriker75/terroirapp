@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { ArrowLeft, MapPin, CreditCard, Check, X, User } from 'lucide-react-native';
+import { ArrowLeft, MapPin, CreditCard, Check, X, User, Copy as CopyIcon } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import HeaderLayout from '@/components/layouts/HeaderLayout';
@@ -23,11 +23,28 @@ import { useAddressesQuery, useCreateAddressMutation } from '@/services/addresse
 import { useBcvRateQuery } from '@/services/bcv/bcv.service';
 import { useCheckoutMutation } from '@/services/orders/orders.service';
 import { MapPicker, LocationResult } from '@/components/blocs/MapPicker';
+import * as Clipboard from 'expo-clipboard';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/config/api';
 import type { AxiosError } from 'axios';
 import type { ApiError } from '@/types/api.types';
 
 const USD_TO_POINTS = 10;
 const FALLBACK_BS_RATE = 6.96;
+
+/**
+ * Config pública de pagos (GET /api/payments/methods): cuenta receptora del
+ * comercio + visibilidad de cada método (admin → Settings → Pagos). Ocultar
+ * un método aquí solo lo quita del front; el backend no cambia.
+ */
+interface PaymentMethodsConfig {
+  cuenta: { bank: string; phone: string; rif: string };
+  debitoDisponible: boolean;
+  methods: Record<'pago_movil' | 'debito_inmediato' | 'efectivo' | 'puntos', boolean>;
+}
+
+/** Fallback visual mientras carga la config (datos reales del comercio). */
+const CUENTA_FALLBACK = { bank: '0169 - Mi Banco', phone: '04245191996', rif: 'J-508025903' };
 
 // Bancos venezolanos (código → nombre) para pago móvil.
 const BANKS = [
@@ -105,6 +122,30 @@ export default function CheckoutScreen() {
   const [payerPhone, setPayerPhone] = useState('');
   const [bankPickerOpen, setBankPickerOpen] = useState(false);
   const selectedBank = BANKS.find((b) => b.code === bankCode);
+
+  // Config pública: cuenta receptora + visibilidad de métodos (settings admin).
+  const { data: payConfig } = useQuery({
+    queryKey: ['payment-methods-config'],
+    queryFn: () =>
+      api.get<PaymentMethodsConfig>('/payments/methods').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const cuenta = payConfig?.cuenta?.bank ? payConfig.cuenta : CUENTA_FALLBACK;
+  const methodVisible = (m: PaymentMethod) => payConfig?.methods?.[m] !== false;
+
+  // Si el método elegido quedó oculto por settings, saltar al primero visible.
+  useEffect(() => {
+    if (!payConfig || methodVisible(paymentMethod)) return;
+    const fallback = (['pago_movil', 'efectivo', 'puntos'] as const).find(methodVisible);
+    if (fallback) setPaymentMethod(fallback);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payConfig, paymentMethod]);
+
+  // Copiar un dato de la cuenta para pegarlo en la app del banco.
+  const copyToClipboard = async (label: string, value: string) => {
+    await Clipboard.setStringAsync(value);
+    Alert.alert('Copiado', `${label} copiado al portapapeles`);
+  };
 
   // ── Modal nueva dirección ─────────────────────────────────────────────────
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -309,6 +350,7 @@ export default function CheckoutScreen() {
             </View>
 
             {/* Pago Móvil */}
+            {methodVisible('pago_movil') && (
             <TouchableOpacity
               style={[
                 styles.optionCard,
@@ -331,21 +373,46 @@ export default function CheckoutScreen() {
               {paymentMethod === 'pago_movil' && (
                 <>
                   <View style={styles.paymentInfoBox}>
+                    {/* Tocar un dato lo copia, para pegarlo en la app del banco */}
                     <View style={styles.paymentInfoRow}>
                       <Text style={styles.paymentInfoLabel}>Banco destino:</Text>
-                      <Text style={styles.paymentInfoValue}>0102 - Banco de Venezuela</Text>
+                      <TouchableOpacity
+                        onPress={() => copyToClipboard('Banco', cuenta.bank)}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      >
+                        <Text style={styles.paymentInfoValue}>{cuenta.bank}</Text>
+                        <CopyIcon size={13} color={COLORS.muted} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.paymentInfoRow}>
                       <Text style={styles.paymentInfoLabel}>Teléfono:</Text>
-                      <Text style={styles.paymentInfoValue}>0412 123 4567</Text>
+                      <TouchableOpacity
+                        onPress={() => copyToClipboard('Teléfono', cuenta.phone)}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      >
+                        <Text style={styles.paymentInfoValue}>{cuenta.phone}</Text>
+                        <CopyIcon size={13} color={COLORS.muted} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.paymentInfoRow}>
                       <Text style={styles.paymentInfoLabel}>RIF:</Text>
-                      <Text style={styles.paymentInfoValue}>J-12345678-9</Text>
+                      <TouchableOpacity
+                        onPress={() => copyToClipboard('RIF', cuenta.rif)}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      >
+                        <Text style={styles.paymentInfoValue}>{cuenta.rif}</Text>
+                        <CopyIcon size={13} color={COLORS.muted} />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.paymentInfoRow}>
                       <Text style={styles.paymentInfoLabel}>Monto a pagar:</Text>
-                      <Text style={styles.paymentInfoValue}>Bs {(total * bcvRate).toFixed(2)}</Text>
+                      <TouchableOpacity
+                        onPress={() => copyToClipboard('Monto', (total * bcvRate).toFixed(2))}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      >
+                        <Text style={styles.paymentInfoValue}>Bs {(total * bcvRate).toFixed(2)}</Text>
+                        <CopyIcon size={13} color={COLORS.muted} />
+                      </TouchableOpacity>
                     </View>
                   </View>
 
@@ -371,8 +438,10 @@ export default function CheckoutScreen() {
                 </>
               )}
             </TouchableOpacity>
+            )}
 
             {/* Efectivo */}
+            {methodVisible('efectivo') && (
             <TouchableOpacity style={[styles.optionCard, paymentMethod === 'efectivo' && styles.optionCardSelected]} onPress={() => setPaymentMethod('efectivo')} activeOpacity={0.8}>
               <View style={styles.optionLeft}>
                 <Text style={styles.optionLabel}>Efectivo (USD)</Text>
@@ -382,8 +451,10 @@ export default function CheckoutScreen() {
                 {paymentMethod === 'efectivo' && <View style={styles.radioInner} />}
               </View>
             </TouchableOpacity>
+            )}
 
             {/* Puntos */}
+            {methodVisible('puntos') && (
             <TouchableOpacity style={[styles.optionCard, paymentMethod === 'puntos' && styles.optionCardSelected]} onPress={() => setPaymentMethod('puntos')} activeOpacity={0.8}>
               <View style={styles.optionLeft}>
                 <Text style={styles.optionLabel}>Mis Puntos</Text>
@@ -395,6 +466,7 @@ export default function CheckoutScreen() {
                 {paymentMethod === 'puntos' && <View style={styles.radioInner} />}
               </View>
             </TouchableOpacity>
+            )}
             {paymentMethod === 'puntos' && !puntosOk && (
               <Text style={styles.errorHint}>No tienes puntos suficientes para este pedido.</Text>
             )}
