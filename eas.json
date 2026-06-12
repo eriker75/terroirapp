@@ -16,9 +16,9 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "REEMPLAZAR_WEB_CLIENT_ID",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "REEMPLAZAR_IOS_CLIENT_ID"
+        "EXPO_PUBLIC_BACKEND_URL": "https://terroir-backend-rkcvtfjtfa-ue.a.run.app",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "430742211550-aubqke137np09p9im7c5sv5hacv32la6.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "430742211550-lj5kmjjrhc6tci15f341n4hh1ubpv1qk.apps.googleusercontent.com"
       }
     },
     "browserstack": {
@@ -27,7 +27,7 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://staging.terroirapp.com"
+        "EXPO_PUBLIC_BACKEND_URL": "https://terroir-backend-rkcvtfjtfa-ue.a.run.app"
       }
     },
     "production": {
@@ -36,9 +36,9 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://terroirapp.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "REEMPLAZAR_WEB_CLIENT_ID",
-        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "REEMPLAZAR_IOS_CLIENT_ID"
+        "EXPO_PUBLIC_BACKEND_URL": "https://terroir-backend-rkcvtfjtfa-ue.a.run.app",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "430742211550-aubqke137np09p9im7c5sv5hacv32la6.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "430742211550-lj5kmjjrhc6tci15f341n4hh1ubpv1qk.apps.googleusercontent.com"
       }
     }
   }

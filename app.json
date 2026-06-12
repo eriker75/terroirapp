@@ -24,7 +24,7 @@
         "monochromeImage": "./assets/images/android/ic_launcher_monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.terroir.somosnodo"
+      "package": "com.terroir.eribert"
     },
     "web": {
       "output": "static",
@@ -58,10 +58,21 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.REEMPLAZAR_CON_TU_IOS_CLIENT_ID"
+          "iosUrlScheme": "com.googleusercontent.apps.430742211550-lj5kmjjrhc6tci15f341n4hh1ubpv1qk"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              { "name": "GoogleUtilities", "modular_headers": true },
+              { "name": "RecaptchaInterop", "modular_headers": true }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

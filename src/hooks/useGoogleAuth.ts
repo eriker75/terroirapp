@@ -70,7 +70,12 @@ export function useGoogleAuth() {
             setError('Google Play Services no está disponible');
             return false;
           default:
-            setError('No se pudo iniciar sesión con Google');
+            // DEVELOPER_ERROR = la firma (SHA-1) del APK instalado no coincide
+            // con ningún OAuth client Android del proyecto de Google (los
+            // builds de EAS y los locales firman con keystores distintos →
+            // huellas distintas; cada una necesita su client en la consola).
+            console.error('[google-auth] error', e.code, e.message);
+            setError(`No se pudo iniciar sesión con Google (${e.code})`);
             return false;
         }
       }
