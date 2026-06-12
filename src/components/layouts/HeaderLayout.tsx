@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { useUnreadCountQuery } from '@/services/notifications/notifications.service';
 
 interface Props {
   children: React.ReactNode;
@@ -12,7 +12,10 @@ interface Props {
 
 export default function HeaderLayout({ children }: Props) {
   const router = useRouter();
-  const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  // No leídas según el SERVIDOR (buzón real). Cuando llega una push en vivo,
+  // el PushNotificationProvider invalida esta query y el badge se actualiza.
+  const { data } = useUnreadCountQuery();
+  const unreadCount = data?.unread ?? 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

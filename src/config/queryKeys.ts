@@ -46,6 +46,7 @@ export const QUERY_KEYS = {
   },
   NOTIFICATIONS: {
     LIST: () => ['notifications'] as const,
+    UNREAD: () => ['notifications', 'unread-count'] as const,
     DETAIL: (id: string) => ['notifications', id] as const,
   },
 } as const;

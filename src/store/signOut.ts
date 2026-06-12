@@ -1,10 +1,12 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@/config/baseUrl';
 import { tokenStorage } from '@/store/useTokenStorage';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProfileStore } from '@/store/useProfileStore';
 import { useWishlistStore } from '@/store/useWishlistStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { EXPO_PUSH_TOKEN_STORAGE_KEY } from '@/providers/PushNotificationProvider';
 
 /**
  * Cierra la sesión del usuario:
@@ -20,6 +22,22 @@ export async function signOut(): Promise<void> {
     tokenStorage.getAccessToken(),
     tokenStorage.getRefreshToken(),
   ]);
+
+  // Da de baja el push token de ESTE dispositivo ANTES de borrar la sesión
+  // (el DELETE necesita el bearer aún válido). Best-effort: si falla, el token
+  // queda obsoleto y el backend lo purga al recibir DeviceNotRegistered.
+  try {
+    const pushToken = await AsyncStorage.getItem(EXPO_PUSH_TOKEN_STORAGE_KEY);
+    if (pushToken && accessToken) {
+      await axios.delete(`${API_URL}/notifications/tokens`, {
+        data: { token: pushToken },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    }
+    await AsyncStorage.removeItem(EXPO_PUSH_TOKEN_STORAGE_KEY);
+  } catch {
+    // best-effort
+  }
 
   if (refreshToken) {
     try {

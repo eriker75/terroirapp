@@ -1,15 +1,22 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
-import { useNotificationsStore } from '@/store/useNotificationsStore';
+import {
+  useMyNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+} from '@/services/notifications/notifications.service';
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -24,10 +31,28 @@ function relativeTime(dateStr: string): string {
 
 type FilterTab = 'all' | 'unread';
 
+/**
+ * Buzón de notificaciones. Fuente de verdad: el SERVIDOR (/notifications/me),
+ * así el histórico aparece aunque la push nunca llegara al dispositivo (sin
+ * conexión, permiso denegado, app recién instalada…). Se refresca al enfocar
+ * la pestaña, con pull-to-refresh, y cuando llega una push en vivo (el
+ * PushNotificationProvider invalida la query).
+ */
 export default function NotificationsScreen() {
   const [filter, setFilter] = useState<FilterTab>('all');
-  const { notifications, unreadCount, markRead, markAllRead } = useNotificationsStore();
+  const { data, isLoading, isRefetching, refetch } = useMyNotificationsQuery();
+  const { mutate: markRead } = useMarkNotificationReadMutation();
+  const { mutate: markAllRead } = useMarkAllNotificationsReadMutation();
 
+  // Histórico fresco cada vez que el usuario entra a la pestaña.
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
+
+  const notifications = data?.data ?? [];
+  const unreadCount = data?.unread ?? 0;
   const displayed = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
 
   return (
@@ -59,14 +84,28 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         </View>
         {unreadCount > 0 && (
-          <TouchableOpacity onPress={markAllRead}>
+          <TouchableOpacity onPress={() => markAllRead()}>
             <Text style={styles.markAllText}>Marcar todo</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
-        {displayed.length === 0 ? (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => void refetch()}
+            tintColor={COLORS.accent}
+          />
+        }
+      >
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator color={COLORS.accent} />
+          </View>
+        ) : displayed.length === 0 ? (
           <View style={styles.emptyState}>
             <Bell size={48} color={COLORS.border} />
             <Text style={styles.emptyText}>

@@ -12,14 +12,22 @@ import React, {
 } from 'react';
 import { Platform } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
+
 import {
   registerPushTokenRequest,
   setPushTokenEnabledRequest,
   sendTestPushRequest,
 } from '@/requests/notifications/notifications.requests';
+import { QUERY_KEYS } from '@/config/queryKeys';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import type { Notification as AppNotification } from '@/types/notification.types';
+
+// Clave donde persiste el token Expo para que signOut() pueda darlo de baja en
+// el backend ANTES de borrar la sesión (el provider vive en React; signOut no).
+export const EXPO_PUSH_TOKEN_STORAGE_KEY = 'terroir-expo-push-token';
 
 // Inspirado en el PushNotificationProvider del proyecto Nowful, adaptado a Terroir:
 //   · registra el token COMPLETO de Expo ("ExponentPushToken[...]") en NUESTRO
@@ -94,6 +102,14 @@ export const PushNotificationProvider: React.FC<{
   const router = useRouter();
   const { isAuthenticated, isHydrated } = useAuthStore();
   const addNotification = useNotificationsStore((s) => s.addNotification);
+  const queryClient = useQueryClient();
+
+  // Al llegar una push, el buzón del servidor ya tiene la entrada (se materializa
+  // antes del envío): invalidar las queries refresca la pantalla y el badge.
+  const invalidateInbox = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATIONS.LIST() });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATIONS.UNREAD() });
+  }, [queryClient]);
 
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] =
@@ -149,6 +165,8 @@ export const PushNotificationProvider: React.FC<{
 
       setExpoPushToken(token);
       tokenRef.current = token;
+      // Disponible para signOut() (da de baja el token con la sesión aún viva).
+      await AsyncStorage.setItem(EXPO_PUSH_TOKEN_STORAGE_KEY, token);
 
       await registerPushTokenRequest({
         token,
@@ -204,6 +222,7 @@ export const PushNotificationProvider: React.FC<{
     const receivedSub = Notifications.addNotificationReceivedListener(
       (notification) => {
         addNotification(toStoreNotification(notification));
+        invalidateInbox();
       },
     );
 
@@ -212,6 +231,7 @@ export const PushNotificationProvider: React.FC<{
       (response) => {
         const notification = response.notification;
         addNotification(toStoreNotification(notification));
+        invalidateInbox();
 
         const data = notification.request.content.data as
           | Record<string, unknown>
@@ -234,7 +254,7 @@ export const PushNotificationProvider: React.FC<{
       receivedSub.remove();
       responseSub.remove();
     };
-  }, [addNotification, router]);
+  }, [addNotification, invalidateInbox, router]);
 
   return (
     <PushNotificationContext.Provider
