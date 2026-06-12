@@ -57,6 +57,13 @@ Verifica que el SHA-1 mostrado sea el MISMO (`87:5A:1A:90:...`).
 npx expo prebuild --clean
 ```
 
+### 3b. Firebase (push FCM)
+
+En el proyecto Firebase (mismo `terroir-497922`): ⚙️ Configuración → Tus apps →
+**Agregar app Android** con el package nuevo `com.terroir.app` → descargar su
+`google-services.json` nuevo → reemplazar el de `mobile/` → `prebuild --clean`.
+La llave FCM V1 de EAS no cambia (es por proyecto Firebase, no por app).
+
 ### 4. Consola de Google (APIs y servicios → Credenciales)
 
 Los OAuth clients no se editan: se crean nuevos y luego se borran los viejos.

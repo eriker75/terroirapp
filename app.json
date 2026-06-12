@@ -24,7 +24,8 @@
         "monochromeImage": "./assets/images/android/ic_launcher_monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.terroir.eribert"
+      "package": "com.terroir.eribert",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",

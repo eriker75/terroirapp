@@ -45,3 +45,6 @@ app-example
 example
 
 .env
+# Llave de service account de Firebase (FCM V1) — SECRETO: solo se sube a EAS,
+# jamás al repo. El google-services.json SÍ se commitea (identificadores públicos).
+*firebase-adminsdk*.json
